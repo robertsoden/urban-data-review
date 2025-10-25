@@ -1,0 +1,5 @@
+{
+  "name": "Urban Data Review",
+  "description": "A web interface for managing an urban data research project. It helps catalog and document various types of urban datasets used in climate and disaster risk assessment.",
+  "requestFramePermissions": []
+}
