@@ -8,7 +8,7 @@ interface ManageCategoriesProps {
 }
 
 const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
-  const { categories, dispatch, addNotification } = useData();
+  const { categories, addCategory, updateCategory, deleteCategory, addNotification } = useData();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
 
@@ -22,28 +22,36 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
     setFormData({ name: '', description: '' });
   };
 
-  const handleDelete = (id: number) => {
-      if (window.confirm('Are you sure you want to delete this category? This cannot be undone.')) {
-        dispatch({ type: 'DELETE_CATEGORY', payload: id });
-        addNotification("Category deleted (if not in use).", "success");
+  const handleDelete = async (id: string) => {
+      if (window.confirm('Are you sure you want to delete this category? Any data types in it will be moved to "Uncategorized".')) {
+        try {
+            await deleteCategory(id);
+            addNotification("Category deleted.", "success");
+        } catch(e) {
+            addNotification("Failed to delete category.", "error");
+        }
       }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
         addNotification("Category name is required.", "error");
         return;
     }
 
-    if (editingCategory) {
-      dispatch({ type: 'UPDATE_CATEGORY', payload: { ...editingCategory, ...formData } });
-      addNotification("Category updated successfully.", "success");
-    } else {
-      dispatch({ type: 'ADD_CATEGORY', payload: formData });
-      addNotification("Category added successfully.", "success");
+    try {
+        if (editingCategory) {
+          await updateCategory({ ...editingCategory, ...formData });
+          addNotification("Category updated successfully.", "success");
+        } else {
+          await addCategory(formData);
+          addNotification("Category added successfully.", "success");
+        }
+        handleCancel();
+    } catch(e) {
+        addNotification("Failed to save category.", "error");
     }
-    handleCancel();
   };
 
   return (

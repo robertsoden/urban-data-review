@@ -6,7 +6,7 @@ import { CheckIcon, XIcon } from '../components/Icons';
 
 interface DatasetDetailProps {
   navigate: (page: Page) => void;
-  id: number;
+  id: string;
 }
 
 const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth?: boolean }> = ({ label, children, fullWidth = false }) => (

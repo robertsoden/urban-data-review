@@ -7,7 +7,7 @@ import { CompletionStatusBadge, PriorityBadge, RdlsStatusBadge } from '../compon
 
 interface DataTypeDetailProps {
   navigate: (page: Page) => void;
-  id: number;
+  id: string;
 }
 
 const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth?: boolean }> = ({ label, children, fullWidth = false }) => (

@@ -2,13 +2,13 @@
 export type Page =
   | { name: 'dashboard' }
   | { name: 'data-types', initialCategory?: string, initialStatus?: CompletionStatus }
-  | { name: 'data-type-detail', id: number }
+  | { name: 'data-type-detail', id: string }
   | { name: 'data-type-add' }
-  | { name: 'data-type-edit', id: number }
+  | { name: 'data-type-edit', id: string }
   | { name: 'datasets' }
-  | { name: 'dataset-detail', id: number }
+  | { name: 'dataset-detail', id: string }
   | { name: 'dataset-add' }
-  | { name: 'dataset-edit', id: number }
+  | { name: 'dataset-edit', id: string }
   | { name: 'categories' }
   | { name: 'manage-categories' }
   | { name: 'progress-report' }
@@ -36,13 +36,13 @@ export enum RdlsStatus {
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   description: string;
 }
 
 export interface DataType {
-  id: number;
+  id: string;
   uid: string;
   name: string;
   category: string;
@@ -61,7 +61,7 @@ export interface DataType {
 }
 
 export interface Dataset {
-  id: number;
+  id: string;
   name: string;
   url: string;
   description: string;
@@ -82,9 +82,9 @@ export interface Dataset {
 }
 
 export interface DataTypeDataset {
-  id: number;
-  data_type_id: number;
-  dataset_id: number;
+  id: string;
+  data_type_id: string;
+  dataset_id: string;
   relationship_notes?: string;
 }
 

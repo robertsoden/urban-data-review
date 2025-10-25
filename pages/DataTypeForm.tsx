@@ -5,11 +5,11 @@ import Card from '../components/Card';
 
 interface DataTypeFormProps {
   navigate: (page: Page) => void;
-  id?: number;
+  id?: string;
 }
 
 const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
-  const { datasets, categories, getDataTypeById, getDatasetsForDataType, dispatch, addNotification } = useData();
+  const { datasets, categories, getDataTypeById, getDatasetsForDataType, addDataType, updateDataType, deleteDataType, addNotification } = useData();
   const isEditMode = id !== undefined;
 
   const [formData, setFormData] = useState<Omit<DataType, 'id' | 'created_at'> | DataType>({
@@ -19,7 +19,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     iso_indicators: '', rdls_can_handle: RdlsStatus.Unassigned,
     rdls_component: '', rdls_notes: ''
   });
-  const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<number>>(new Set());
+  const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isEditMode) {
@@ -37,7 +37,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleLinkChange = (datasetId: number) => {
+  const handleLinkChange = (datasetId: string) => {
     setLinkedDatasetIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(datasetId)) {
@@ -49,41 +49,45 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.uid) {
       addNotification('Name and UID are required.', 'error');
       return;
     }
 
-    if (isEditMode) {
-        dispatch({
-            type: 'UPDATE_DATATYPE',
-            payload: {
+    try {
+        if (isEditMode) {
+            await updateDataType({
                 dataType: formData as DataType,
-                linkedDatasetIds: Array.from(linkedDatasetIds),
-            }
-        });
-        addNotification('Data Type updated successfully!', 'success');
-        navigate({ name: 'data-type-detail', id });
-    } else {
-        dispatch({
-          type: 'ADD_DATATYPE',
-          payload: {
-            dataType: formData,
-            linkedDatasetIds: Array.from(linkedDatasetIds),
-          },
-        });
-        addNotification('Data Type added successfully!', 'success');
-        navigate({ name: 'data-types' });
+                linkedDatasetIds: Array.from(linkedDatasetIds) as any, // Cast for simplicity
+            });
+            addNotification('Data Type updated successfully!', 'success');
+            navigate({ name: 'data-type-detail', id });
+        } else {
+            await addDataType({
+                dataType: formData,
+                linkedDatasetIds: Array.from(linkedDatasetIds) as any, // Cast for simplicity
+            });
+            addNotification('Data Type added successfully!', 'success');
+            navigate({ name: 'data-types' });
+        }
+    } catch (error) {
+        console.error("Failed to save data type:", error);
+        addNotification('Failed to save data type.', 'error');
     }
   };
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isEditMode && formData && window.confirm(`Are you sure you want to delete the data type "${formData.name}"? This action cannot be undone.`)) {
-      dispatch({ type: 'DELETE_DATATYPE', payload: id });
-      addNotification('Data Type deleted successfully!', 'success');
-      navigate({ name: 'data-types' });
+        try {
+            await deleteDataType(id);
+            addNotification('Data Type deleted successfully!', 'success');
+            navigate({ name: 'data-types' });
+        } catch (error) {
+            console.error("Failed to delete data type:", error);
+            addNotification('Failed to delete data type.', 'error');
+        }
     }
   }
 
@@ -137,6 +141,11 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
             <div className="md:col-span-3">
                 <FormRow label="Key Attributes (JSON Array)" htmlFor="key_attributes">
                     <textarea id="key_attributes" name="key_attributes" value={formData.key_attributes} onChange={handleChange} rows={3} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md font-mono" />
+                </FormRow>
+            </div>
+             <div className="md:col-span-3">
+                <FormRow label="Notes" htmlFor="notes">
+                    <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                 </FormRow>
             </div>
           </div>

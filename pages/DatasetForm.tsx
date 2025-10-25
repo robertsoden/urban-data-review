@@ -5,11 +5,11 @@ import Card from '../components/Card';
 
 interface DatasetFormProps {
   navigate: (page: Page) => void;
-  id?: number;
+  id?: string;
 }
 
 const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
-  const { dataTypes, getDatasetById, getDataTypesForDataset, dispatch, addNotification } = useData();
+  const { dataTypes, getDatasetById, getDataTypesForDataset, addDataset, updateDataset, deleteDataset, addNotification } = useData();
   const isEditMode = id !== undefined;
   
   const [formData, setFormData] = useState<Omit<Dataset, 'id' | 'created_at'> | Dataset>({
@@ -18,7 +18,7 @@ const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
     access_type: 'Open', license: '', is_validated: false, is_primary_example: false,
     quality_notes: '', used_in_projects: '', notes: '',
   });
-  const [linkedDataTypeIds, setLinkedDataTypeIds] = useState<Set<number>>(new Set());
+  const [linkedDataTypeIds, setLinkedDataTypeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isEditMode) {
@@ -41,7 +41,7 @@ const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
     }));
   };
 
-  const handleLinkChange = (dataTypeId: number) => {
+  const handleLinkChange = (dataTypeId: string) => {
     setLinkedDataTypeIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(dataTypeId)) {
@@ -53,7 +53,7 @@ const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.url) {
       addNotification('Name and URL are required.', 'error');
@@ -64,34 +64,38 @@ const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
       return;
     }
 
-    if (isEditMode) {
-        dispatch({
-            type: 'UPDATE_DATASET',
-            payload: {
+    try {
+        if (isEditMode) {
+            await updateDataset({
                 dataset: formData as Dataset,
-                linkedDataTypeIds: Array.from(linkedDataTypeIds),
-            }
-        });
-        addNotification('Dataset updated successfully!', 'success');
-        navigate({ name: 'dataset-detail', id });
-    } else {
-        dispatch({
-          type: 'ADD_DATASET',
-          payload: {
-            dataset: formData,
-            linkedDataTypeIds: Array.from(linkedDataTypeIds),
-          },
-        });
-        addNotification('Dataset added successfully!', 'success');
-        navigate({ name: 'datasets' });
+                linkedDataTypeIds: Array.from(linkedDataTypeIds) as any,
+            });
+            addNotification('Dataset updated successfully!', 'success');
+            navigate({ name: 'dataset-detail', id });
+        } else {
+            await addDataset({
+                dataset: formData,
+                linkedDataTypeIds: Array.from(linkedDataTypeIds) as any,
+            });
+            addNotification('Dataset added successfully!', 'success');
+            navigate({ name: 'datasets' });
+        }
+    } catch(error) {
+        console.error("Failed to save dataset:", error);
+        addNotification('Failed to save dataset.', 'error');
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isEditMode && formData && window.confirm(`Are you sure you want to delete the dataset "${formData.name}"? This action cannot be undone.`)) {
-      dispatch({ type: 'DELETE_DATASET', payload: id });
-      addNotification('Dataset deleted successfully!', 'success');
-      navigate({ name: 'datasets' });
+        try {
+            await deleteDataset(id);
+            addNotification('Dataset deleted successfully!', 'success');
+            navigate({ name: 'datasets' });
+        } catch (error) {
+            console.error("Failed to delete dataset:", error);
+            addNotification('Failed to delete dataset.', 'error');
+        }
     }
   }
   
