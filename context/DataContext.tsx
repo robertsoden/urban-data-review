@@ -187,8 +187,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       reader.onload = async (event) => {
         try {
+          console.log('[Import] Starting import process...');
           const content = event.target?.result as string;
+          console.log('[Import] File read successfully, parsing JSON...');
           const data = JSON.parse(content);
+          console.log('[Import] JSON parsed successfully');
 
           // Validate required fields (dataTypes and datasets are required)
           const missingFields: string[] = [];
@@ -224,6 +227,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Set defaults for optional fields
           const categories = data.categories || [];
           const dataTypeDatasets = data.dataTypeDatasets || [];
+
+          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${categories.length} categories, ${dataTypeDatasets.length} dataTypeDatasets`);
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
@@ -292,22 +297,33 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
 
+          console.log('[Import] Validation complete, starting Firestore operations...');
+
           // Delete existing data from Firestore
-          // Must chunk deletes to avoid Firestore's 500 operation limit
-          const BATCH_LIMIT = 500;
+          // Use smaller batch size and add delays to avoid rate limiting
+          const BATCH_LIMIT = 400; // Reduced from 500 to be more conservative
           const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
 
+          console.log('[Import] Deleting existing data...');
           for (const collectionName of collectionsToDelete) {
             const snapshot = await getDocs(collection(db, collectionName));
+            const totalDocs = snapshot.docs.length;
+            console.log(`[Import] Deleting ${totalDocs} documents from ${collectionName}...`);
+
             let deleteBatch = writeBatch(db);
             let deleteCount = 0;
+            let totalDeleted = 0;
 
             for (const docSnapshot of snapshot.docs) {
               deleteBatch.delete(docSnapshot.ref);
               deleteCount++;
+              totalDeleted++;
 
               if (deleteCount >= BATCH_LIMIT) {
+                console.log(`[Import] Committing batch delete (${totalDeleted}/${totalDocs})...`);
                 await deleteBatch.commit();
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 100));
                 deleteBatch = writeBatch(db);
                 deleteCount = 0;
               }
@@ -315,59 +331,84 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Commit any remaining deletes
             if (deleteCount > 0) {
+              console.log(`[Import] Committing final batch delete for ${collectionName} (${totalDeleted}/${totalDocs})...`);
               await deleteBatch.commit();
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
+            console.log(`[Import] Completed deletion of ${collectionName}`);
           }
+
+          console.log('[Import] Deletion complete, starting data import...');
 
           // Save to Firestore using batch writes
           // Split into chunks to avoid Firestore's 500 operation limit
           let batch = writeBatch(db);
           let operationCount = 0;
+          let totalOperations = data.dataTypes.length + data.datasets.length + categories.length + dataTypeDatasets.length;
+          let completedOperations = 0;
 
-          const commitBatchIfNeeded = async () => {
-            if (operationCount >= BATCH_LIMIT) {
-              await batch.commit();
-              batch = writeBatch(db);
-              operationCount = 0;
+          const commitBatchIfNeeded = async (force: boolean = false) => {
+            if (force || operationCount >= BATCH_LIMIT) {
+              if (operationCount > 0) {
+                console.log(`[Import] Committing batch (${completedOperations}/${totalOperations} operations)...`);
+                await batch.commit();
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 100));
+                batch = writeBatch(db);
+                operationCount = 0;
+              }
             }
           };
 
           // Save dataTypes
+          console.log(`[Import] Saving ${data.dataTypes.length} dataTypes...`);
           for (const item of data.dataTypes) {
             await commitBatchIfNeeded();
             const docRef = doc(db, 'dataTypes', String(item.id));
             batch.set(docRef, item);
             operationCount++;
+            completedOperations++;
           }
+          await commitBatchIfNeeded(true);
+          console.log('[Import] DataTypes saved');
 
           // Save datasets
+          console.log(`[Import] Saving ${data.datasets.length} datasets...`);
           for (const item of data.datasets) {
             await commitBatchIfNeeded();
             const docRef = doc(db, 'datasets', String(item.id));
             batch.set(docRef, item);
             operationCount++;
+            completedOperations++;
           }
+          await commitBatchIfNeeded(true);
+          console.log('[Import] Datasets saved');
 
           // Save categories
+          console.log(`[Import] Saving ${categories.length} categories...`);
           for (const item of categories) {
             await commitBatchIfNeeded();
             const docRef = doc(db, 'categories', String(item.id));
             batch.set(docRef, item);
             operationCount++;
+            completedOperations++;
           }
+          await commitBatchIfNeeded(true);
+          console.log('[Import] Categories saved');
 
           // Save dataTypeDatasets
+          console.log(`[Import] Saving ${dataTypeDatasets.length} dataTypeDatasets...`);
           for (const item of dataTypeDatasets) {
             await commitBatchIfNeeded();
             const docRef = doc(db, 'dataTypeDatasets', String(item.id));
             batch.set(docRef, item);
             operationCount++;
+            completedOperations++;
           }
+          await commitBatchIfNeeded(true);
+          console.log('[Import] DataTypeDatasets saved');
 
-          // Commit any remaining operations in the final batch
-          if (operationCount > 0) {
-            await batch.commit();
-          }
+          console.log('[Import] All Firestore operations complete, updating state...');
 
           // Only update state AFTER successful Firestore write
           setDataTypes(data.dataTypes);
@@ -375,8 +416,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCategories(categories);
           setDataTypeDatasets(dataTypeDatasets);
 
+          console.log('[Import] Import completed successfully!');
           resolve();
         } catch (error) {
+          console.error('[Import] Import failed with error:', error);
           // Handle JSON parsing errors specifically
           if (error instanceof SyntaxError) {
             reject(new Error('Invalid JSON file: unable to parse file content'));
@@ -387,6 +430,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       reader.onerror = () => {
+        console.error('[Import] File read failed');
         reject(new Error('Failed to read file'));
       };
 
