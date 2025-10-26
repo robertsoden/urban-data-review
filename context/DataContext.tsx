@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DataType, Dataset, Category, Notification } from '../types';
+import { DataType, Dataset, Category, DataTypeDataset, Notification } from '../types';
 import { mockDataTypes, mockDatasets, mockCategories } from '../data/mockData';
 
 interface DataContextType {
   dataTypes: DataType[];
   datasets: Dataset[];
   categories: Category[];
+  dataTypeDatasets: DataTypeDataset[];
   notifications: Notification[];
   loading: boolean;
   error: Error | null;
@@ -30,6 +31,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dataTypes, setDataTypes] = useState<DataType[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [dataTypeDatasets, setDataTypeDatasets] = useState<DataTypeDataset[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -132,6 +134,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dataTypes,
       datasets,
       categories,
+      dataTypeDatasets,
       exportedAt: new Date().toISOString(),
     };
 
@@ -159,30 +162,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const content = event.target?.result as string;
           const data = JSON.parse(content);
 
-          // Validate the imported data structure
+          // Validate required fields (dataTypes and datasets are required)
           const missingFields: string[] = [];
           if (!data.dataTypes) missingFields.push('dataTypes');
           if (!data.datasets) missingFields.push('datasets');
-          if (!data.categories) missingFields.push('categories');
 
           if (missingFields.length > 0) {
             throw new Error(
               `Invalid data format: missing required fields: ${missingFields.join(', ')}. ` +
-              `Expected format: { dataTypes: [], datasets: [], categories: [] }`
+              `Expected format: { dataTypes: [], datasets: [], categories: [], dataTypeDatasets: [] }`
             );
           }
 
-          // Validate that fields are arrays
+          // Validate that required fields are arrays
           const invalidFields: string[] = [];
           if (!Array.isArray(data.dataTypes)) invalidFields.push('dataTypes');
           if (!Array.isArray(data.datasets)) invalidFields.push('datasets');
-          if (!Array.isArray(data.categories)) invalidFields.push('categories');
 
           if (invalidFields.length > 0) {
             throw new Error(
               `Invalid data format: the following fields must be arrays: ${invalidFields.join(', ')}`
             );
           }
+
+          // Validate optional fields are arrays if present
+          if (data.categories && !Array.isArray(data.categories)) {
+            throw new Error('Invalid data format: categories must be an array');
+          }
+          if (data.dataTypeDatasets && !Array.isArray(data.dataTypeDatasets)) {
+            throw new Error('Invalid data format: dataTypeDatasets must be an array');
+          }
+
+          // Set defaults for optional fields
+          const categories = data.categories || [];
+          const dataTypeDatasets = data.dataTypeDatasets || [];
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
@@ -221,23 +234,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
 
-          // Validate individual Category items
-          const requiredCategoryFields = ['id', 'name', 'description'];
+          // Validate individual Category items (if present)
+          if (categories.length > 0) {
+            const requiredCategoryFields = ['id', 'name', 'description'];
 
-          data.categories.forEach((item: any, index: number) => {
-            const missing = requiredCategoryFields.filter(field => !(field in item));
-            if (missing.length > 0) {
-              throw new Error(
-                `Invalid Category at index ${index} (name: "${item.name || 'unknown'}"): ` +
-                `missing required fields: ${missing.join(', ')}`
-              );
-            }
-          });
+            categories.forEach((item: any, index: number) => {
+              const missing = requiredCategoryFields.filter(field => !(field in item));
+              if (missing.length > 0) {
+                throw new Error(
+                  `Invalid Category at index ${index} (name: "${item.name || 'unknown'}"): ` +
+                  `missing required fields: ${missing.join(', ')}`
+                );
+              }
+            });
+          }
+
+          // Validate individual DataTypeDataset items (if present)
+          if (dataTypeDatasets.length > 0) {
+            const requiredDataTypeDatasetFields = ['id', 'data_type_id', 'dataset_id'];
+
+            dataTypeDatasets.forEach((item: any, index: number) => {
+              const missing = requiredDataTypeDatasetFields.filter(field => !(field in item));
+              if (missing.length > 0) {
+                throw new Error(
+                  `Invalid DataTypeDataset at index ${index}: ` +
+                  `missing required fields: ${missing.join(', ')}`
+                );
+              }
+            });
+          }
 
           // Set the imported data
           setDataTypes(data.dataTypes);
           setDatasets(data.datasets);
-          setCategories(data.categories);
+          setCategories(categories);
+          setDataTypeDatasets(dataTypeDatasets);
 
           resolve();
         } catch (error) {
@@ -263,6 +294,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dataTypes,
       datasets,
       categories,
+      dataTypeDatasets,
       notifications,
       loading,
       error,
