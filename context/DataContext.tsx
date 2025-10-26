@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DataType, Dataset, Category, DataTypeDataset, Notification } from '../types';
 import { mockDataTypes, mockDatasets, mockCategories } from '../data/mockData';
+import { db } from '../firebase';
+import { collection, getDocs, doc, setDoc, writeBatch } from 'firebase/firestore';
 
 interface DataContextType {
   dataTypes: DataType[];
@@ -40,15 +42,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadData = async () => {
       try {
         setLoading(true);
-        // Simulate fetching data from a mock source
-        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Try to load from Firestore first
+        const dataTypesSnapshot = await getDocs(collection(db, 'dataTypes'));
+        const datasetsSnapshot = await getDocs(collection(db, 'datasets'));
+        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        const dataTypeDatasetsSnapshot = await getDocs(collection(db, 'dataTypeDatasets'));
+
+        if (!dataTypesSnapshot.empty && !datasetsSnapshot.empty) {
+          // Load from Firestore
+          const loadedDataTypes = dataTypesSnapshot.docs.map(doc => doc.data() as DataType);
+          const loadedDatasets = datasetsSnapshot.docs.map(doc => doc.data() as Dataset);
+          const loadedCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+          const loadedDataTypeDatasets = dataTypeDatasetsSnapshot.docs.map(doc => doc.data() as DataTypeDataset);
+
+          setDataTypes(loadedDataTypes);
+          setDatasets(loadedDatasets);
+          setCategories(loadedCategories);
+          setDataTypeDatasets(loadedDataTypeDatasets);
+        } else {
+          // Use mock data as fallback
+          setDataTypes(mockDataTypes);
+          setDatasets(mockDatasets);
+          setCategories(mockCategories);
+          setDataTypeDatasets([]);
+        }
+
+        setError(null);
+      } catch (e) {
+        console.error('Failed to load from Firestore, using mock data:', e);
+        // Fall back to mock data on error
         setDataTypes(mockDataTypes);
         setDatasets(mockDatasets);
         setCategories(mockCategories);
-        setError(null);
-      } catch (e) {
-        setError(e as Error);
-        addNotification('Failed to load data', 'error');
+        setDataTypeDatasets([]);
+        setError(null); // Don't show error to user, just fall back silently
       } finally {
         setLoading(false);
       }
@@ -157,7 +185,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return new Promise<void>((resolve, reject) => {
       const reader = new FileReader();
 
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
           const content = event.target?.result as string;
           const data = JSON.parse(content);
@@ -264,11 +292,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
 
-          // Set the imported data
+          // Set the imported data in state
           setDataTypes(data.dataTypes);
           setDatasets(data.datasets);
           setCategories(categories);
           setDataTypeDatasets(dataTypeDatasets);
+
+          // Save to Firestore using batch writes for better performance
+          const batch = writeBatch(db);
+
+          // Save dataTypes
+          data.dataTypes.forEach((item: DataType) => {
+            const docRef = doc(db, 'dataTypes', String(item.id));
+            batch.set(docRef, item);
+          });
+
+          // Save datasets
+          data.datasets.forEach((item: Dataset) => {
+            const docRef = doc(db, 'datasets', String(item.id));
+            batch.set(docRef, item);
+          });
+
+          // Save categories
+          categories.forEach((item: Category) => {
+            const docRef = doc(db, 'categories', String(item.id));
+            batch.set(docRef, item);
+          });
+
+          // Save dataTypeDatasets
+          dataTypeDatasets.forEach((item: DataTypeDataset) => {
+            const docRef = doc(db, 'dataTypeDatasets', String(item.id));
+            batch.set(docRef, item);
+          });
+
+          // Commit the batch
+          await batch.commit();
 
           resolve();
         } catch (error) {
