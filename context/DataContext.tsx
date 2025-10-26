@@ -184,6 +184,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             );
           }
 
+          // Validate individual DataType items
+          const requiredDataTypeFields = [
+            'id', 'uid', 'name', 'category', 'description', 'priority',
+            'completion_status', 'minimum_criteria', 'notes', 'key_attributes',
+            'applicable_standards', 'iso_indicators', 'rdls_can_handle',
+            'rdls_component', 'rdls_notes', 'created_at'
+          ];
+
+          data.dataTypes.forEach((item: any, index: number) => {
+            const missing = requiredDataTypeFields.filter(field => !(field in item));
+            if (missing.length > 0) {
+              throw new Error(
+                `Invalid DataType at index ${index} (name: "${item.name || 'unknown'}"): ` +
+                `missing required fields: ${missing.join(', ')}`
+              );
+            }
+          });
+
+          // Validate individual Dataset items
+          const requiredDatasetFields = [
+            'id', 'name', 'url', 'description', 'source_organization',
+            'source_type', 'geographic_coverage', 'temporal_coverage',
+            'format', 'resolution', 'access_type', 'license',
+            'is_validated', 'is_primary_example', 'quality_notes',
+            'used_in_projects', 'notes', 'created_at'
+          ];
+
+          data.datasets.forEach((item: any, index: number) => {
+            const missing = requiredDatasetFields.filter(field => !(field in item));
+            if (missing.length > 0) {
+              throw new Error(
+                `Invalid Dataset at index ${index} (name: "${item.name || 'unknown'}"): ` +
+                `missing required fields: ${missing.join(', ')}`
+              );
+            }
+          });
+
+          // Validate individual Category items
+          const requiredCategoryFields = ['id', 'name', 'description'];
+
+          data.categories.forEach((item: any, index: number) => {
+            const missing = requiredCategoryFields.filter(field => !(field in item));
+            if (missing.length > 0) {
+              throw new Error(
+                `Invalid Category at index ${index} (name: "${item.name || 'unknown'}"): ` +
+                `missing required fields: ${missing.join(', ')}`
+              );
+            }
+          });
+
           // Set the imported data
           setDataTypes(data.dataTypes);
           setDatasets(data.datasets);
