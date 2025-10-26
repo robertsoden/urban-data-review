@@ -2,23 +2,10 @@
 export default {
   content: [
     "./index.html",
-    "./App.tsx",
-    "./firebase.ts",
-    "./index.css",
-    "./index.tsx",
-    "./types.ts",
-    "./components/**/*.tsx",
-    "./context/**/*.tsx",
-    "./data/**/*.ts",
-    "./pages/**/*.tsx",
+    "./*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./context/**/*.{ts,tsx}",
+    "./data/**/*.{ts,tsx}",
+    "./pages/**/*.{ts,tsx}",
   ],
-  theme: {
-    extend: {
-      colors: {
-        'header-blue': '#2c3e50',
-        'button-blue': '#3498db',
-      }
-    },
-  },
-  plugins: [],
 }
