@@ -28,6 +28,7 @@ interface DataContextType {
   getDataTypeById: (id: string) => DataType | undefined;
   getDatasetById: (id: string) => Dataset | undefined;
   getDatasetsForDataType: (dataTypeId: string) => Dataset[];
+  getDataTypesForDataset: (datasetId: string) => DataType[];
   getDataTypeCountForDataset: (datasetId: string) => number;
 }
 
@@ -229,6 +230,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getDatasetsForDataType = (dataTypeId: string): Dataset[] => {
     const links = dataTypeDatasets.filter(link => link.data_type_id === dataTypeId);
     return links.map(link => datasets.find(ds => ds.id === link.dataset_id)).filter(Boolean) as Dataset[];
+  };
+
+  const getDataTypesForDataset = (datasetId: string): DataType[] => {
+    const links = dataTypeDatasets.filter(link => link.dataset_id === datasetId);
+    return links.map(link => dataTypes.find(dt => dt.id === link.data_type_id)).filter(Boolean) as DataType[];
   };
 
   const getDataTypeCountForDataset = (datasetId: string): number => {
@@ -547,6 +553,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getDataTypeById,
       getDatasetById,
       getDatasetsForDataType,
+      getDataTypesForDataset,
       getDataTypeCountForDataset,
     }}>
       {children}
