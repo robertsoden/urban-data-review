@@ -1,4 +1,3 @@
-// FIX: Removed self-import of `CompletionStatus` to resolve declaration conflict.
 export type Page =
   | { name: 'dashboard' }
   | { name: 'data-types', initialCategory?: string, initialStatus?: CompletionStatus }

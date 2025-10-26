@@ -1,24 +1,75 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import Card, { CardHeader } from '../components/Card';
+import { Page, DataType, Priority } from '../types';
+import Card from '../components/Card';
+import { CheckIcon, XIcon } from '../components/Icons';
 
-const ProgressReport: React.FC = () => {
-  const { state, getters } = useData();
-  const { dataTypes } = state;
-  const { getDatasetsForDataType } = getters;
+interface ProgressReportProps {
+  navigate: (page: Page) => void;
+}
 
-  const totalDataTypes = dataTypes.length;
-  const linkedDataTypes = dataTypes.filter(dt => getDatasetsForDataType(dt.id).length > 0).length;
-  const progress = totalDataTypes > 0 ? Math.round((linkedDataTypes / totalDataTypes) * 100) : 0;
+const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
+  const { dataTypes, getDatasetsForDataType } = useData();
+
+  const sortedDataTypes = useMemo(() => {
+    const priorityOrder = {
+      [Priority.Essential]: 1,
+      [Priority.Beneficial]: 2,
+      [Priority.Low]: 3,
+    };
+    return [...dataTypes].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }, [dataTypes]);
+
+  const Checkmark: React.FC<{ condition: boolean }> = ({ condition }) => (
+    <div className="flex justify-center">{condition ? <CheckIcon /> : <XIcon />}</div>
+  );
 
   return (
     <Card>
-      <CardHeader>Progress Report</CardHeader>
-      <p>You have linked <strong>{linkedDataTypes}</strong> out of <strong>{totalDataTypes}</strong> data types.</p>
-      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
-        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold text-slate-800">Progress Report</h1>
+        <p className="text-slate-600 mt-1">
+          A summary of missing information for each data type, sorted by priority.
+        </p>
       </div>
-      <p className="text-right mt-1">{progress}% Complete</p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+            <tr>
+              <th className="p-3">Data Type (Priority)</th>
+              <th className="p-3 text-center">Has Example Dataset?</th>
+              <th className="p-3 text-center">Has Key Attributes?</th>
+              <th className="p-3 text-center">Has Standards?</th>
+              <th className="p-3 text-center">Has ISO Indicators?</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-slate-200">
+            {sortedDataTypes.map(dt => (
+              <tr key={dt.id} className="hover:bg-slate-50">
+                <td 
+                  className="p-3 font-medium text-slate-900 cursor-pointer hover:text-button-blue transition-colors"
+                  onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
+                >
+                  {dt.name} <span className="font-normal text-slate-500">({dt.priority})</span>
+                </td>
+                <td className="p-3">
+                  <Checkmark condition={getDatasetsForDataType(dt.id).length > 0} />
+                </td>
+                <td className="p-3">
+                  <Checkmark condition={!!dt.key_attributes && dt.key_attributes.trim() !== '' && dt.key_attributes.trim() !== '[]'} />
+                </td>
+                <td className="p-3">
+                  <Checkmark condition={!!dt.applicable_standards && dt.applicable_standards.trim() !== ''} />
+                </td>
+                <td className="p-3">
+                  <Checkmark condition={!!dt.iso_indicators && dt.iso_indicators.trim() !== ''} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 };

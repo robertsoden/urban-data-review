@@ -1,69 +1,128 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { Category } from '../types';
+import { Page, Category } from '../types';
 import Card, { CardHeader } from '../components/Card';
 
-const ManageCategories: React.FC = () => {
-  const { state, actions } = useData();
-  const { categories } = state;
-  const { addCategory, updateCategory, deleteCategory } = actions;
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+interface ManageCategoriesProps {
+  navigate: (page: Page) => void;
+}
 
-  const handleAdd = async () => {
-    if (newCategoryName.trim()) {
-      await addCategory({ name: newCategoryName.trim(), color: '#cccccc' }); // Default color
-      setNewCategoryName('');
-    }
+const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
+  const { categories, addCategory, updateCategory, deleteCategory, addNotification } = useData();
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [formData, setFormData] = useState({ name: '', description: '' });
+
+  const handleEditClick = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({ name: category.name, description: category.description });
   };
 
-  const handleUpdate = async (category: Category) => {
-    if (editingCategory && editingCategory.name.trim()) {
-      await updateCategory(editingCategory);
-      setEditingCategory(null);
+  const handleCancel = () => {
+    setEditingCategory(null);
+    setFormData({ name: '', description: '' });
+  };
+
+  const handleDelete = async (id: string) => {
+      if (window.confirm('Are you sure you want to delete this category? Any data types in it will be moved to "Uncategorized".')) {
+        try {
+            await deleteCategory(id);
+            addNotification("Category deleted.", "success");
+        } catch(e) {
+            addNotification("Failed to delete category.", "error");
+        }
+      }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name) {
+        addNotification("Category name is required.", "error");
+        return;
+    }
+
+    try {
+        if (editingCategory) {
+          await updateCategory({ ...editingCategory, ...formData });
+          addNotification("Category updated successfully.", "success");
+        } else {
+          await addCategory(formData);
+          addNotification("Category added successfully.", "success");
+        }
+        handleCancel();
+    } catch(e) {
+        addNotification("Failed to save category.", "error");
     }
   };
 
   return (
-    <Card>
-      <CardHeader>Manage Categories</CardHeader>
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="New category name"
-            className="flex-grow p-2 border rounded-md"
-          />
-          <button onClick={handleAdd} className="bg-blue-500 text-white px-4 py-2 rounded-md">Add</button>
-        </div>
-
-        <ul className="space-y-2">
-          {categories.map(cat => (
-            <li key={cat.id} className="flex items-center gap-2 p-2 border rounded-md">
-              {editingCategory?.id === cat.id ? (
-                <input
-                  type="text"
-                  value={editingCategory.name}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  className="flex-grow p-1 border rounded-md"
-                />
-              ) : (
-                <span className="flex-grow">{cat.name}</span>
-              )}
-              
-              {editingCategory?.id === cat.id ? (
-                <button onClick={() => handleUpdate(cat)} className="bg-green-500 text-white px-3 py-1 rounded-md text-sm">Save</button>
-              ) : (
-                <button onClick={() => setEditingCategory(cat)} className="bg-gray-200 px-3 py-1 rounded-md text-sm">Edit</button>
-              )}
-              <button onClick={() => deleteCategory(cat.id)} className="bg-red-500 text-white px-3 py-1 rounded-md text-sm">Delete</button>
-            </li>
-          ))}
-        </ul>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
+         <button onClick={() => navigate({ name: 'categories' })} className="mb-4 text-button-blue hover:underline">
+          &larr; Back to Categories View
+        </button>
+        <Card>
+          <CardHeader>All Categories</CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+                <tr>
+                  <th className="p-3">Name</th>
+                  <th className="p-3">Description</th>
+                  <th className="p-3"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {categories.map(cat => (
+                  <tr key={cat.id}>
+                    <td className="p-3 font-medium text-slate-900">{cat.name}</td>
+                    <td className="p-3 text-slate-600">{cat.description}</td>
+                    <td className="p-3 text-right space-x-2 whitespace-nowrap">
+                      <button onClick={() => handleEditClick(cat)} className="text-yellow-600 hover:underline font-semibold">Edit</button>
+                      <button onClick={() => handleDelete(cat.id)} className="text-red-600 hover:underline font-semibold">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </div>
-    </Card>
+
+      <div>
+       <div className="mb-4 text-transparent">.</div> {/* Spacer */}
+        <Card>
+          <CardHeader>{editingCategory ? 'Edit Category' : 'Add New Category'}</CardHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                type="text"
+                id="name"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                id="description"
+                rows={3}
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+                {editingCategory && <button type="button" onClick={handleCancel} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>}
+                <button type="submit" className="bg-button-blue text-white py-2 px-4 rounded-md shadow-sm text-sm font-medium hover:bg-blue-600">
+                    {editingCategory ? 'Save Changes' : 'Add Category'}
+                </button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    </div>
   );
 };
 

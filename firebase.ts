@@ -5,12 +5,12 @@ import { getFirestore } from "firebase/firestore";
 // TODO: Replace the following with your app's Firebase project configuration
 // See: https://firebase.google.com/docs/web/learn-more#config-object
 const firebaseConfig = {
-  apiKey: "AIzaSyBDzTZ8iQvp-nL1h36uWHIDF1cault9r7k",
-  authDomain: "urban-data-review-197097-9ac83.firebaseapp.com",
-  projectId: "urban-data-review-197097-9ac83",
-  storageBucket: "urban-data-review-197097-9ac83.firebasestorage.app",
-  messagingSenderId: "89716660791",
-  appId: "1:89716660791:web:359babea1d1e53f7ce7db2"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 // Initialize Firebase
