@@ -42,7 +42,7 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
 
     try {
         if (editingCategory) {
-          await updateCategory({ ...editingCategory, ...formData });
+          await updateCategory(editingCategory.id, formData);
           addNotification("Category updated successfully.", "success");
         } else {
           await addCategory(formData);
