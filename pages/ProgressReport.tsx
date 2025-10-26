@@ -27,15 +27,15 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
   return (
     <Card>
       <div className="mb-4">
-        <h1 className="text-3xl font-bold text-slate-800">Progress Report</h1>
-        <p className="text-slate-600 mt-1">
+        <h1 className="text-3xl font-bold text-neutral-800">Progress Report</h1>
+        <p className="text-neutral-600 mt-1">
           A summary of missing information for each data type, sorted by priority.
         </p>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+          <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
             <tr>
               <th className="p-3">Data Type (Priority)</th>
               <th className="p-3 text-center">Has Example Dataset?</th>
@@ -44,14 +44,14 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
               <th className="p-3 text-center">Has ISO Indicators?</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white divide-y divide-neutral-200">
             {sortedDataTypes.map(dt => (
-              <tr key={dt.id} className="hover:bg-slate-50">
-                <td 
-                  className="p-3 font-medium text-slate-900 cursor-pointer hover:text-button-blue transition-colors"
+              <tr key={dt.id} className="hover:bg-neutral-50">
+                <td
+                  className="p-3 font-medium text-neutral-900 cursor-pointer hover:text-primary-600 transition-colors"
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
-                  {dt.name} <span className="font-normal text-slate-500">({dt.priority})</span>
+                  {dt.name} <span className="font-normal text-neutral-500">({dt.priority})</span>
                 </td>
                 <td className="p-3">
                   <Checkmark condition={getDatasetsForDataType(dt.id).length > 0} />

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, CompletionStatus } from '../types';
-import { Card } from '../components/Card';
+import { Card, CardContent } from '../components/Card';
 import { CompletionStatusBadge, PriorityBadge } from '../components/Badge';
 
 interface DataTypesListProps {
@@ -35,72 +35,97 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
   }, [dataTypes, categoryFilter, statusFilter, searchTerm]);
 
   return (
-    <Card>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-        <h1 className="text-3xl font-bold text-slate-800">Data Types</h1>
-        <button onClick={() => navigate({ name: 'data-type-add' })} className="bg-button-blue text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors shadow-sm">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-3xl font-bold text-neutral-800">Data Types</h1>
+        <button
+          onClick={() => navigate({ name: 'data-type-add' })}
+          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm font-medium"
+        >
           Add New Data Type
         </button>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
-        <div>
-          <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700">Category</label>
-          <select id="category-filter" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-            <option value="All">All Categories</option>
-            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">Status</label>
-          <select id="status-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-            <option value="All">All Statuses</option>
-            {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="search-filter" className="block text-sm font-medium text-gray-700">Search</label>
-          <input id="search-filter" type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="by name or UID..." className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"/>
-        </div>
-      </div>
 
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
-            <tr>
-              <th className="p-3">UID</th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Category</th>
-              <th className="p-3">Priority</th>
-              <th className="p-3">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
-            {filteredDataTypes.map(dt => (
-              <tr 
-                key={dt.id} 
-                className="hover:bg-slate-50 cursor-pointer"
-                onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
+      <Card>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="category-filter" className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
+              <select
+                id="category-filter"
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
               >
-                <td className="p-3 font-mono text-sm text-slate-500">{dt.uid}</td>
-                <td className="p-3 font-medium text-slate-900 text-header-blue hover:text-button-blue">{dt.name}</td>
-                <td className="p-3 text-slate-600">{dt.category}</td>
-                <td className="p-3"><PriorityBadge priority={dt.priority} /></td>
-                <td className="p-3"><CompletionStatusBadge status={dt.completion_status} /></td>
+                <option value="All">All Categories</option>
+                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="status-filter" className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+              >
+                <option value="All">All Statuses</option>
+                {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="search-filter" className="block text-sm font-medium text-neutral-700 mb-1">Search</label>
+              <input
+                id="search-filter"
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="by name or UID..."
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-neutral-50 border-b border-neutral-200">
+              <tr>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">UID</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>
               </tr>
-            ))}
-             {filteredDataTypes.length === 0 && (
-                <tr>
-                    <td colSpan={5} className="text-center p-8 text-slate-500">
-                        No data types match the current filters.
-                    </td>
+            </thead>
+            <tbody className="bg-white divide-y divide-neutral-200">
+              {filteredDataTypes.map(dt => (
+                <tr
+                  key={dt.id}
+                  className="hover:bg-neutral-50 cursor-pointer transition-colors"
+                  onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
+                >
+                  <td className="px-4 py-3 font-mono text-sm text-neutral-500">{dt.uid}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
+                  <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
+                  <td className="px-4 py-3"><PriorityBadge priority={dt.priority} /></td>
+                  <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>
                 </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+              ))}
+              {filteredDataTypes.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-neutral-500">
+                    No data types match the current filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
   );
 };
 

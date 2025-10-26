@@ -12,8 +12,8 @@ interface DataTypeDetailProps {
 
 const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth?: boolean }> = ({ label, children, fullWidth = false }) => (
     <div className={fullWidth ? "col-span-1 sm:col-span-2" : ""}>
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{label}</h3>
-        <div className="mt-1 text-slate-900 prose prose-sm max-w-none">{children || <span className="text-slate-400 italic">Not specified</span>}</div>
+        <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">{label}</h3>
+        <div className="mt-1 text-neutral-900 prose prose-sm max-w-none">{children || <span className="text-neutral-400 italic">Not specified</span>}</div>
     </div>
 );
 
@@ -26,7 +26,7 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
     return (
       <Card>
         <p className="text-red-500">Data Type not found.</p>
-        <button onClick={() => navigate({ name: 'data-types' })} className="mt-4 text-button-blue hover:underline">
+        <button onClick={() => navigate({ name: 'data-types' })} className="mt-4 text-primary-600 hover:underline">
           &larr; Back to List
         </button>
       </Card>
@@ -39,28 +39,28 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
           if (Array.isArray(attributes) && attributes.length > 0) {
               return (
                   <ul className="list-disc list-inside space-y-1">
-                      {attributes.map((attr, index) => <li key={index}><code className="bg-slate-200 text-slate-800 text-xs px-2 py-1 rounded">{attr}</code></li>)}
+                      {attributes.map((attr, index) => <li key={index}><code className="bg-neutral-200 text-neutral-800 text-xs px-2 py-1 rounded">{attr}</code></li>)}
                   </ul>
               )
           }
       } catch (e) {
           // fall through to return original string if not valid json
       }
-      return <p>{jsonString || <span className="text-slate-400 italic">Not specified</span>}</p>
+      return <p>{jsonString || <span className="text-neutral-400 italic">Not specified</span>}</p>
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <button onClick={() => navigate({ name: 'data-types' })} className="mb-4 text-button-blue hover:underline">
+        <button onClick={() => navigate({ name: 'data-types' })} className="mb-4 text-primary-600 hover:underline">
             &larr; Back to Data Types List
         </button>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">{dataType.name} <span className="font-mono text-xl text-slate-500 font-normal">({dataType.uid})</span></h1>
-            <p className="mt-1 text-slate-600">{dataType.category}</p>
+            <h1 className="text-3xl font-bold text-neutral-800">{dataType.name} <span className="font-mono text-xl text-neutral-500 font-normal">({dataType.uid})</span></h1>
+            <p className="mt-1 text-neutral-600">{dataType.category}</p>
           </div>
-          <button onClick={() => navigate({ name: 'data-type-edit', id: dataType.id })} className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors shadow-sm whitespace-nowrap">
+          <button onClick={() => navigate({ name: 'data-type-edit', id: dataType.id })} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors shadow-sm whitespace-nowrap">
             Edit Data Type
           </button>
         </div>
@@ -102,7 +102,7 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
         {linkedDatasets.length > 0 ? (
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                     <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+                     <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
                         <tr>
                             <th className="p-3">Name</th>
                             <th className="p-3">Source</th>
@@ -110,13 +110,13 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
                             <th className="p-3"></th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-slate-200">
+                    <tbody className="bg-white divide-y divide-neutral-200">
                         {linkedDatasets.map(ds => (
-                            <tr key={ds.id} className="hover:bg-slate-50">
+                            <tr key={ds.id} className="hover:bg-neutral-50">
                                 <td className="p-3">
-                                    <span 
-                                        onClick={() => navigate({ name: 'dataset-detail', id: ds.id })} 
-                                        className="font-medium text-slate-900 cursor-pointer hover:text-button-blue"
+                                    <span
+                                        onClick={() => navigate({ name: 'dataset-detail', id: ds.id })}
+                                        className="font-medium text-neutral-900 cursor-pointer hover:text-primary-600"
                                     >
                                         {ds.name}
                                     </span>
@@ -124,12 +124,12 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
                                         <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Primary Example</span>
                                     )}
                                 </td>
-                                <td className="p-3 text-slate-600">{ds.source_organization}</td>
+                                <td className="p-3 text-neutral-600">{ds.source_organization}</td>
                                 <td className="p-3">
-                                    <span className="font-mono bg-slate-200 text-slate-800 text-xs px-2 py-1 rounded">{ds.format}</span>
+                                    <span className="font-mono bg-neutral-200 text-neutral-800 text-xs px-2 py-1 rounded">{ds.format}</span>
                                 </td>
                                 <td className="p-3 text-right">
-                                    <a href={ds.url} target="_blank" rel="noopener noreferrer" className="text-button-blue hover:underline font-semibold whitespace-nowrap">View Source &rarr;</a>
+                                    <a href={ds.url} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline font-semibold whitespace-nowrap">View Source &rarr;</a>
                                 </td>
                             </tr>
                         ))}
@@ -137,7 +137,7 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
                 </table>
             </div>
         ) : (
-            <p className="text-slate-500 italic">This data type has not been linked to any datasets yet.</p>
+            <p className="text-neutral-500 italic">This data type has not been linked to any datasets yet.</p>
         )}
       </Card>
 

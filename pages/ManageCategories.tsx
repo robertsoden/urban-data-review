@@ -57,25 +57,25 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2">
-         <button onClick={() => navigate({ name: 'categories' })} className="mb-4 text-button-blue hover:underline">
+         <button onClick={() => navigate({ name: 'categories' })} className="mb-4 text-primary-600 hover:underline">
           &larr; Back to Categories View
         </button>
         <Card>
           <CardHeader>All Categories</CardHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+              <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
                 <tr>
                   <th className="p-3">Name</th>
                   <th className="p-3">Description</th>
                   <th className="p-3"></th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody className="bg-white divide-y divide-neutral-200">
                 {categories.map(cat => (
                   <tr key={cat.id}>
-                    <td className="p-3 font-medium text-slate-900">{cat.name}</td>
-                    <td className="p-3 text-slate-600">{cat.description}</td>
+                    <td className="p-3 font-medium text-neutral-900">{cat.name}</td>
+                    <td className="p-3 text-neutral-600">{cat.description}</td>
                     <td className="p-3 text-right space-x-2 whitespace-nowrap">
                       <button onClick={() => handleEditClick(cat)} className="text-yellow-600 hover:underline font-semibold">Edit</button>
                       <button onClick={() => handleDelete(cat.id)} className="text-red-600 hover:underline font-semibold">Delete</button>
@@ -94,28 +94,28 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
           <CardHeader>{editingCategory ? 'Edit Category' : 'Add New Category'}</CardHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-neutral-700">Name</label>
               <input
                 type="text"
                 id="name"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                className="mt-1 block w-full shadow-sm sm:text-sm border-neutral-300 rounded-lg focus:ring-primary-500"
               />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <label htmlFor="description" className="block text-sm font-medium text-neutral-700">Description</label>
               <textarea
                 id="description"
                 rows={3}
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                className="mt-1 block w-full shadow-sm sm:text-sm border-neutral-300 rounded-lg focus:ring-primary-500"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-                {editingCategory && <button type="button" onClick={handleCancel} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>}
-                <button type="submit" className="bg-button-blue text-white py-2 px-4 rounded-md shadow-sm text-sm font-medium hover:bg-blue-600">
+                {editingCategory && <button type="button" onClick={handleCancel} className="bg-white py-2 px-4 border border-neutral-300 rounded-lg shadow-sm text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</button>}
+                <button type="submit" className="bg-primary-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-primary-700">
                     {editingCategory ? 'Save Changes' : 'Add Category'}
                 </button>
             </div>

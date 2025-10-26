@@ -43,12 +43,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
         <div className="space-y-6">
             <Card>
                 <CardHeader>Export Data</CardHeader>
-                <p className="text-slate-600 mb-4">
+                <p className="text-neutral-600 mb-4">
                     Export all your data (Data Types, Datasets, Categories, and their relationships) into a single JSON file. This file can be used as a backup or for importing into another instance of this application.
                 </p>
-                <button 
+                <button
                     onClick={exportData}
-                    className="bg-button-blue text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors shadow-sm"
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                 >
                     Export All Data as JSON
                 </button>
@@ -67,8 +67,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                  </div>
                 <div className="mt-4">
                     <label htmlFor="import-file" className={`
-                        inline-block px-4 py-2 rounded-md shadow-sm cursor-pointer
-                        ${isImporting ? 'bg-gray-400 text-gray-800' : 'bg-yellow-500 text-white hover:bg-yellow-600 transition-colors'}
+                        inline-block px-4 py-2 rounded-lg shadow-sm cursor-pointer
+                        ${isImporting ? 'bg-neutral-400 text-neutral-800' : 'bg-yellow-500 text-white hover:bg-yellow-600 transition-colors'}
                     `}>
                         {isImporting ? 'Importing...' : 'Choose JSON file to Import'}
                     </label>
