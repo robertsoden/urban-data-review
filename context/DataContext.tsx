@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DataType, Dataset, Category, DataTypeDataset, Notification } from '../types';
 import { mockDataTypes, mockDatasets, mockCategories } from '../data/mockData';
 import { db } from '../firebase';
-import { collection, getDocs, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 
 interface DataContextType {
   dataTypes: DataType[];
@@ -291,6 +291,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
           }
+          
+          const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
+          for (const collectionName of collectionsToDelete) {
+            const snapshot = await getDocs(collection(db, collectionName));
+            const deleteBatch = writeBatch(db);
+            snapshot.docs.forEach(doc => {
+              deleteBatch.delete(doc.ref);
+            });
+            await deleteBatch.commit();
+          }
+
 
           // Set the imported data in state
           setDataTypes(data.dataTypes);
