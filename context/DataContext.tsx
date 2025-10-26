@@ -291,7 +291,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
           }
-          
+
+          // Delete existing data from Firestore
           const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
           for (const collectionName of collectionsToDelete) {
             const snapshot = await getDocs(collection(db, collectionName));
@@ -302,42 +303,62 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await deleteBatch.commit();
           }
 
+          // Save to Firestore using batch writes
+          // Split into chunks to avoid Firestore's 500 operation limit
+          const BATCH_LIMIT = 500;
+          let batch = writeBatch(db);
+          let operationCount = 0;
 
-          // Set the imported data in state
+          const commitBatchIfNeeded = async () => {
+            if (operationCount >= BATCH_LIMIT) {
+              await batch.commit();
+              batch = writeBatch(db);
+              operationCount = 0;
+            }
+          };
+
+          // Save dataTypes
+          for (const item of data.dataTypes) {
+            await commitBatchIfNeeded();
+            const docRef = doc(db, 'dataTypes', String(item.id));
+            batch.set(docRef, item);
+            operationCount++;
+          }
+
+          // Save datasets
+          for (const item of data.datasets) {
+            await commitBatchIfNeeded();
+            const docRef = doc(db, 'datasets', String(item.id));
+            batch.set(docRef, item);
+            operationCount++;
+          }
+
+          // Save categories
+          for (const item of categories) {
+            await commitBatchIfNeeded();
+            const docRef = doc(db, 'categories', String(item.id));
+            batch.set(docRef, item);
+            operationCount++;
+          }
+
+          // Save dataTypeDatasets
+          for (const item of dataTypeDatasets) {
+            await commitBatchIfNeeded();
+            const docRef = doc(db, 'dataTypeDatasets', String(item.id));
+            batch.set(docRef, item);
+            operationCount++;
+          }
+
+          // Commit any remaining operations in the final batch
+          if (operationCount > 0) {
+            await batch.commit();
+          }
+
+          // Only update state AFTER successful Firestore write
           setDataTypes(data.dataTypes);
           setDatasets(data.datasets);
           setCategories(categories);
           setDataTypeDatasets(dataTypeDatasets);
-
-          // Save to Firestore using batch writes for better performance
-          const batch = writeBatch(db);
-
-          // Save dataTypes
-          data.dataTypes.forEach((item: DataType) => {
-            const docRef = doc(db, 'dataTypes', String(item.id));
-            batch.set(docRef, item);
-          });
-
-          // Save datasets
-          data.datasets.forEach((item: Dataset) => {
-            const docRef = doc(db, 'datasets', String(item.id));
-            batch.set(docRef, item);
-          });
-
-          // Save categories
-          categories.forEach((item: Category) => {
-            const docRef = doc(db, 'categories', String(item.id));
-            batch.set(docRef, item);
-          });
-
-          // Save dataTypeDatasets
-          dataTypeDatasets.forEach((item: DataTypeDataset) => {
-            const docRef = doc(db, 'dataTypeDatasets', String(item.id));
-            batch.set(docRef, item);
-          });
-
-          // Commit the batch
-          await batch.commit();
 
           resolve();
         } catch (error) {
