@@ -65,8 +65,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const categoriesSnapshot = await getDocs(collection(db, 'categories'));
         const dataTypeDatasetsSnapshot = await getDocs(collection(db, 'dataTypeDatasets'));
 
+        console.log('[DataContext] Firestore snapshot sizes:', {
+          dataTypes: dataTypesSnapshot.size,
+          datasets: datasetsSnapshot.size,
+          categories: categoriesSnapshot.size,
+          dataTypeDatasets: dataTypeDatasetsSnapshot.size
+        });
+
         // Check if any collection has data
         const hasAnyData = !dataTypesSnapshot.empty || !datasetsSnapshot.empty || !categoriesSnapshot.empty || !dataTypeDatasetsSnapshot.empty;
+
+        console.log('[DataContext] hasAnyData:', hasAnyData);
 
         if (hasAnyData) {
           // Load from Firestore (use empty arrays for empty collections)
@@ -75,12 +84,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const loadedCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
           const loadedDataTypeDatasets = dataTypeDatasetsSnapshot.docs.map(doc => doc.data() as DataTypeDataset);
 
+          console.log('[DataContext] Loaded from Firestore:', {
+            dataTypes: loadedDataTypes.length,
+            datasets: loadedDatasets.length,
+            categories: loadedCategories.length,
+            dataTypeDatasets: loadedDataTypeDatasets.length
+          });
+
           setDataTypes(loadedDataTypes);
           setDatasets(loadedDatasets);
           setCategories(loadedCategories);
           setDataTypeDatasets(loadedDataTypeDatasets);
         } else {
           // Use mock data as fallback only if ALL collections are empty
+          console.log('[DataContext] Using mock data as fallback');
           setDataTypes(mockDataTypes);
           setDatasets(mockDatasets);
           setCategories(mockCategories);
