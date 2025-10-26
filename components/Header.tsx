@@ -22,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ navigate }) => {
             <NavItem onClick={() => navigate({ name: 'data-types' })}>Data Types</NavItem>
             <NavItem onClick={() => navigate({ name: 'categories' })}>Categories</NavItem>
             <NavItem onClick={() => navigate({ name: 'progress-report' })}>Progress</NavItem>
+            <NavItem onClick={() => navigate({ name: 'import-export' })}>Import/Export</NavItem>
           </nav>
         </div>
       </div>
