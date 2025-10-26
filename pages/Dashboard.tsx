@@ -2,58 +2,64 @@ import React from 'react';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import Card, { CardHeader } from '../components/Card';
-import { DocumentTextIcon, DatabaseIcon, CollectionIcon, ChartBarIcon } from '../components/Icons';
 
 interface DashboardProps {
-  navigate: (page: Page) => void;
+    navigate: (page: Page) => void;
 }
 
-const StatCard: React.FC<{ title: string; value: number | string; icon: React.ReactNode; onClick: () => void; }> = ({ title, value, icon, onClick }) => (
-    <div onClick={onClick} className="cursor-pointer group">
-        <Card className="hover:shadow-lg hover:border-blue-500 border-2 border-transparent transition-all">
-            <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                    {icon}
-                </div>
-                <div>
-                    <p className="text-sm font-medium text-slate-500">{title}</p>
-                    <p className="text-2xl font-bold text-slate-800">{value}</p>
-                </div>
-            </div>
-        </Card>
-    </div>
-);
-
 const Dashboard: React.FC<DashboardProps> = ({ navigate }) => {
-  const { dataTypes, datasets, categories } = useData();
+    const { state } = useData();
+    const { dataTypes, datasets, categories } = state;
 
-  const essentialDataTypes = dataTypes.filter(dt => dt.priority === 'Essential').length;
+    const recentDataTypes = [...dataTypes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
 
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Data Types" value={dataTypes.length} icon={<DocumentTextIcon className="w-6 h-6" />} onClick={() => navigate({name: 'data-types'})} />
-          <StatCard title="Total Datasets" value={datasets.length} icon={<DatabaseIcon className="w-6 h-6" />} onClick={() => navigate({name: 'datasets'})} />
-          <StatCard title="Total Categories" value={categories.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'categories'})} />
-          <StatCard title="Essential Data Types" value={essentialDataTypes} icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => navigate({name: 'progress-report'})} />
-      </div>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Quick Stats */}
+            <Card>
+                <CardHeader>Quick Stats</CardHeader>
+                <div className="text-center">
+                    <p className="text-4xl font-bold">{dataTypes.length}</p>
+                    <p className="text-slate-600">Data Types</p>
+                </div>
+                <div className="text-center mt-4">
+                    <p className="text-4xl font-bold">{datasets.length}</p>
+                    <p className="text-slate-600">Datasets</p>
+                </div>
+                <div className="text-center mt-4">
+                    <p className="text-4xl font-bold">{categories.length}</p>
+                    <p className="text-slate-600">Categories</p>
+                </div>
+            </Card>
 
-      <Card>
-        <CardHeader>Welcome to the Urban Data Catalog</CardHeader>
-        <div className="prose prose-slate max-w-none">
-            <p>This tool is designed to help you manage and track essential urban datasets for your projects. You can:</p>
-            <ul>
-                <li><strong>Define Data Types:</strong> Catalog the specific types of data you need, like Building Footprints or Road Networks.</li>
-                <li><strong>Link Datasets:</strong> Connect these data types to real-world datasets from various sources.</li>
-                <li><strong>Track Progress:</strong> Use the progress report to identify gaps in your data collection.</li>
-                <li><strong>Manage Categories:</strong> Organize your data types into logical groups.</li>
-            </ul>
-            <p>Use the navigation on the left to get started.</p>
+            {/* Recent Activity */}
+            <Card className="md:col-span-2">
+                <CardHeader>Recently Added Data Types</CardHeader>
+                {recentDataTypes.length > 0 ? (
+                    <ul className="space-y-2">
+                        {recentDataTypes.map(dt => (
+                            <li key={dt.id} 
+                                className="p-3 bg-slate-50 rounded-md hover:bg-slate-100 cursor-pointer transition-colors"
+                                onClick={() => navigate({ name: 'dataTypeDetail', id: dt.id })}>
+                                <p className="font-bold text-slate-800">{dt.name}</p>
+                                <p className="text-sm text-slate-500">{new Date(dt.created_at).toLocaleDateString()}</p>
+                            </li>
+                        ))}
+                    </ul>
+                ) : <p className="text-slate-500">No data types have been added yet.</p>}
+            </Card>
+
+            {/* Actions */}
+            <Card className="md:col-span-3">
+                <CardHeader>Quick Actions</CardHeader>
+                <div className="flex flex-wrap gap-4">
+                    <button onClick={() => navigate({ name: 'dataTypeForm' })} className="bg-button-blue text-white px-4 py-2 rounded-md hover:bg-blue-600">+ Add Data Type</button>
+                    <button onClick={() => navigate({ name: 'datasetForm' })} className="bg-button-blue text-white px-4 py-2 rounded-md hover:bg-blue-600">+ Add Dataset</button>
+                    <button onClick={() => navigate({ name: 'manageCategories' })} className="bg-gray-200 px-4 py-2 rounded-md">Manage Categories</button>
+                </div>
+            </Card>
         </div>
-      </Card>
-
-    </div>
-  );
+    );
 };
 
 export default Dashboard;

@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 import { DataType, Dataset, DataTypeDataset, Category, Notification } from '../types';
 
-// State and Action Types
+// Main application state
 interface AppState {
   dataTypes: DataType[];
   datasets: Dataset[];
@@ -14,30 +14,40 @@ interface AppState {
   loading: boolean;
 }
 
-// Context Definition
-interface DataContextProps {
-  state: AppState;
-  addDataType: (payload: { dataType: Omit<DataType, 'id' | 'created_at'>; linkedDatasetIds: number[] }) => Promise<void>;
-  updateDataType: (payload: { dataType: DataType; linkedDatasetIds: number[] }) => Promise<void>;
+// Functions to modify state (CRUD operations)
+interface DataActions {
+  addDataType: (payload: { dataType: Omit<DataType, 'id' | 'created_at'>; linkedDatasetIds: string[] }) => Promise<void>;
+  updateDataType: (payload: { dataType: DataType; linkedDatasetIds: string[] }) => Promise<void>;
   deleteDataType: (id: string) => Promise<void>;
-  addDataset: (payload: { dataset: Omit<Dataset, 'id' | 'created_at'>; linkedDataTypeIds: number[] }) => Promise<void>;
-  updateDataset: (payload: { dataset: Dataset; linkedDataTypeIds: number[] }) => Promise<void>;
+  addDataset: (payload: { dataset: Omit<Dataset, 'id' | 'created_at'>; linkedDataTypeIds: string[] }) => Promise<void>;
+  updateDataset: (payload: { dataset: Dataset; linkedDataTypeIds: string[] }) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   addCategory: (payload: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (payload: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  addNotification: (message: string, type: 'success' | 'error') => void;
+  loadData: (payload: { dataTypes: any[], datasets: any[], dataTypeDatasets: any[] }) => Promise<void>;
+}
+
+// Functions to retrieve or compute derived state
+interface DataGetters {
   getDataTypeById: (id: string) => DataType | undefined;
   getDatasetById: (id: string) => Dataset | undefined;
   getDatasetsForDataType: (dataTypeId: string) => Dataset[];
   getDataTypesForDataset: (datasetId: string) => DataType[];
   getDataTypeCountForDataset: (datasetId: string) => number;
-  addNotification: (message: string, type: 'success' | 'error') => void;
-  loadData: (payload: { dataTypes: any[], datasets: any[], dataTypeDatasets: any[] }) => Promise<void>;
+  getCategoryByName: (name: string) => Category | undefined;
+}
+
+// The full context value
+interface DataContextProps {
+  state: AppState;
+  actions: DataActions;
+  getters: DataGetters;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-// Provider Component
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [state, setState] = useState<AppState>({
@@ -49,223 +59,226 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     loading: true,
   });
 
-  // Real-time listeners for Firestore collections
+  const addNotification = useCallback((message: string, type: 'success' | 'error') => {
+    const newNotification = { id: Date.now(), message, type };
+    setState(s => ({ ...s, notifications: [newNotification, ...s.notifications] }));
+    setTimeout(() => {
+      setState(s => ({ ...s, notifications: s.notifications.filter(n => n.id !== newNotification.id) }));
+    }, 4000);
+  }, []);
+
   useEffect(() => {
     if (!user) {
-        setState(s => ({...s, loading: false}));
-        return;
+      setState({ dataTypes: [], datasets: [], dataTypeDatasets: [], categories: [], notifications: [], loading: false });
+      return;
     }
 
     setState(s => ({ ...s, loading: true }));
-    
-    const collections = ['dataTypes', 'datasets', 'dataTypeDatasets', 'categories'];
-    const unsubscribes = collections.map(coll => 
-        onSnapshot(collection(db, coll), (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-            setState(prevState => ({ ...prevState, [coll]: data }));
-        }, (error) => {
-            console.error(`Error fetching ${coll}:`, error);
-            addNotification(`Failed to load ${coll}.`, 'error');
-        })
+
+    const collections: (keyof AppState)[] = ['dataTypes', 'datasets', 'dataTypeDatasets', 'categories'];
+    const unsubscribes = collections.map(coll =>
+      onSnapshot(collection(db, coll), (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        setState(prevState => ({ ...prevState, [coll]: data as any }));
+      }, (error) => {
+        console.error(`Error fetching ${coll}:`, error);
+        addNotification(`Failed to load ${coll}.`, 'error');
+      })
     );
 
-    // Set loading to false after a short delay to allow initial data to populate
-    const timer = setTimeout(() => {
-        setState(s => ({...s, loading: false}));
-    }, 1500);
+    const timer = setTimeout(() => setState(s => ({ ...s, loading: false })), 1500);
 
     return () => {
-        unsubscribes.forEach(unsub => unsub());
-        clearTimeout(timer);
+      unsubscribes.forEach(unsub => unsub());
+      clearTimeout(timer);
     };
-  }, [user]);
+  }, [user, addNotification]);
 
-  // Notification Management
-  const addNotification = useCallback((message: string, type: 'success' | 'error') => {
-    const newNotification = { id: Date.now(), message, type };
-    setState(s => ({ ...s, notifications: [newNotification] }));
-    setTimeout(() => {
-        setState(s => ({...s, notifications: s.notifications.filter(n => n.id !== newNotification.id)}));
-    }, 3000);
-  }, []);
-  
-  // CRUD Operations
-  const addDataType = async (payload: { dataType: Omit<DataType, 'id' | 'created_at'>; linkedDatasetIds: number[] }) => {
-     const newDataType = { ...payload.dataType, created_at: new Date().toISOString() };
-     const docRef = await addDoc(collection(db, 'dataTypes'), newDataType);
-     // This is not efficient, but simple for this structure.
-     // In a real app, relationships might be stored as an array in the document.
-     const batch = writeBatch(db);
-     payload.linkedDatasetIds.forEach(dsId => {
-         const linkRef = doc(collection(db, 'dataTypeDatasets'));
-         batch.set(linkRef, { data_type_id: docRef.id, dataset_id: dsId });
-     });
-     await batch.commit();
-  };
-
-  const updateDataType = async (payload: { dataType: DataType; linkedDatasetIds: number[] }) => {
-    const { id, ...dataToUpdate } = payload.dataType;
-    await updateDoc(doc(db, 'dataTypes', id), dataToUpdate);
-    
-    const linksQuery = query(collection(db, "dataTypeDatasets"), where("data_type_id", "==", id));
-    const querySnapshot = await getDocs(linksQuery);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => batch.delete(doc.ref));
-    
-    payload.linkedDatasetIds.forEach(dsId => {
-        const newLinkRef = doc(collection(db, 'dataTypeDatasets'));
-        batch.set(newLinkRef, { data_type_id: id, dataset_id: dsId });
-    });
-    await batch.commit();
-  };
-
-  const deleteDataType = async (id: string) => {
-    await deleteDoc(doc(db, 'dataTypes', id));
-    // Also delete links
-    const linksQuery = query(collection(db, "dataTypeDatasets"), where("data_type_id", "==", id));
-    const querySnapshot = await getDocs(linksQuery);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-  };
-  
-  const addDataset = async (payload: { dataset: Omit<Dataset, 'id' | 'created_at'>; linkedDataTypeIds: number[] }) => {
-      const newDataset = { ...payload.dataset, created_at: new Date().toISOString() };
-      const docRef = await addDoc(collection(db, 'datasets'), newDataset);
+  const actions = useMemo<DataActions>(() => ({
+    addNotification,
+    addDataType: async ({ dataType, linkedDatasetIds }) => {
+      const newDataType = { ...dataType, created_at: new Date().toISOString() };
+      const docRef = await addDoc(collection(db, 'dataTypes'), newDataType);
       const batch = writeBatch(db);
-      payload.linkedDataTypeIds.forEach(dtId => {
-          const linkRef = doc(collection(db, 'dataTypeDatasets'));
-          batch.set(linkRef, { data_type_id: dtId, dataset_id: docRef.id });
+      linkedDatasetIds.forEach(dsId => {
+        const linkRef = doc(collection(db, 'dataTypeDatasets'));
+        batch.set(linkRef, { data_type_id: docRef.id, dataset_id: dsId });
       });
       await batch.commit();
-  };
-  
-  const updateDataset = async (payload: { dataset: Dataset; linkedDataTypeIds: number[] }) => {
-    const { id, ...dataToUpdate } = payload.dataset;
-    await updateDoc(doc(db, 'datasets', id), dataToUpdate);
-
-    const linksQuery = query(collection(db, "dataTypeDatasets"), where("dataset_id", "==", id));
-    const querySnapshot = await getDocs(linksQuery);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => batch.delete(doc.ref));
-    
-    payload.linkedDataTypeIds.forEach(dtId => {
+      addNotification('Data Type added!', 'success');
+    },
+    updateDataType: async ({ dataType, linkedDatasetIds }) => {
+      const { id, ...dataToUpdate } = dataType;
+      await updateDoc(doc(db, 'dataTypes', id), dataToUpdate);
+      const linksQuery = query(collection(db, "dataTypeDatasets"), where("data_type_id", "==", id));
+      const querySnapshot = await getDocs(linksQuery);
+      const batch = writeBatch(db);
+      querySnapshot.forEach(doc => batch.delete(doc.ref));
+      linkedDatasetIds.forEach(dsId => {
+        const newLinkRef = doc(collection(db, 'dataTypeDatasets'));
+        batch.set(newLinkRef, { data_type_id: id, dataset_id: dsId });
+      });
+      await batch.commit();
+      addNotification('Data Type updated!', 'success');
+    },
+    deleteDataType: async (id) => {
+      await deleteDoc(doc(db, 'dataTypes', id));
+      const linksQuery = query(collection(db, "dataTypeDatasets"), where("data_type_id", "==", id));
+      const querySnapshot = await getDocs(linksQuery);
+      const batch = writeBatch(db);
+      querySnapshot.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      addNotification('Data Type deleted.', 'success');
+    },
+    addDataset: async ({ dataset, linkedDataTypeIds }) => {
+      const newDataset = { ...dataset, created_at: new Date().toISOString() };
+      const docRef = await addDoc(collection(db, 'datasets'), newDataset);
+      const batch = writeBatch(db);
+      linkedDataTypeIds.forEach(dtId => {
+        const linkRef = doc(collection(db, 'dataTypeDatasets'));
+        batch.set(linkRef, { data_type_id: dtId, dataset_id: docRef.id });
+      });
+      await batch.commit();
+      addNotification('Dataset added!', 'success');
+    },
+    updateDataset: async ({ dataset, linkedDataTypeIds }) => {
+      const { id, ...dataToUpdate } = dataset;
+      await updateDoc(doc(db, 'datasets', id), dataToUpdate);
+      const linksQuery = query(collection(db, "dataTypeDatasets"), where("dataset_id", "==", id));
+      const querySnapshot = await getDocs(linksQuery);
+      const batch = writeBatch(db);
+      querySnapshot.forEach(doc => batch.delete(doc.ref));
+      linkedDataTypeIds.forEach(dtId => {
         const newLinkRef = doc(collection(db, 'dataTypeDatasets'));
         batch.set(newLinkRef, { data_type_id: dtId, dataset_id: id });
-    });
-    await batch.commit();
-  };
-
-  const deleteDataset = async (id: string) => {
-     await deleteDoc(doc(db, 'datasets', id));
-     // Also delete links
-    const linksQuery = query(collection(db, "dataTypeDatasets"), where("dataset_id", "==", id));
-    const querySnapshot = await getDocs(linksQuery);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-  };
-  
-  const addCategory = async (payload: Omit<Category, 'id'>) => {
+      });
+      await batch.commit();
+      addNotification('Dataset updated!', 'success');
+    },
+    deleteDataset: async (id) => {
+      await deleteDoc(doc(db, 'datasets', id));
+      const linksQuery = query(collection(db, "dataTypeDatasets"), where("dataset_id", "==", id));
+      const querySnapshot = await getDocs(linksQuery);
+      const batch = writeBatch(db);
+      querySnapshot.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      addNotification('Dataset deleted.', 'success');
+    },
+    addCategory: async (payload) => {
       if (state.categories.some(c => c.name.toLowerCase() === payload.name.toLowerCase())) {
         addNotification(`Category "${payload.name}" already exists.`, 'error');
         return;
       }
       await addDoc(collection(db, 'categories'), payload);
-  };
-  
-  const updateCategory = async (payload: Category) => {
-    const { id, ...dataToUpdate } = payload;
-    const oldCategoryName = state.categories.find(c => c.id === id)?.name;
-    
-    if (!oldCategoryName) return;
-
-    await updateDoc(doc(db, 'categories', id), dataToUpdate);
-
-    // Update all dataTypes using this category
-    const q = query(collection(db, 'dataTypes'), where('category', '==', oldCategoryName));
-    const querySnapshot = await getDocs(q);
-    const batch = writeBatch(db);
-    querySnapshot.forEach((doc) => {
-        batch.update(doc.ref, { category: dataToUpdate.name });
-    });
-    await batch.commit();
-  };
-  
-  const deleteCategory = async (id: string) => {
+      addNotification('Category added!', 'success');
+    },
+    updateCategory: async (payload) => {
+      const { id, ...dataToUpdate } = payload;
+      const oldCategory = state.categories.find(c => c.id === id);
+      if (!oldCategory) return;
+      await updateDoc(doc(db, 'categories', id), dataToUpdate);
+      const q = query(collection(db, 'dataTypes'), where('category', '==', oldCategory.name));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => batch.update(doc.ref, { category: dataToUpdate.name }));
+      await batch.commit();
+      addNotification('Category updated!', 'success');
+    },
+    deleteCategory: async (id) => {
       const categoryToDelete = state.categories.find(c => c.id === id);
       if (!categoryToDelete) return;
-      
-      // Reassign data types
       const q = query(collection(db, 'dataTypes'), where('category', '==', categoryToDelete.name));
       const querySnapshot = await getDocs(q);
       const batch = writeBatch(db);
-      querySnapshot.forEach((doc) => {
-          batch.update(doc.ref, { category: "Uncategorized" });
-      });
+      querySnapshot.forEach((doc) => batch.update(doc.ref, { category: "Uncategorized" }));
       await batch.commit();
-      
       await deleteDoc(doc(db, 'categories', id));
-  };
+      addNotification('Category deleted.', 'success');
+    },
+    loadData: async (payload) => {
+    const { dataTypes: importedDataTypes, datasets: importedDatasets, dataTypeDatasets: importedLinks } = payload;
 
-  const loadData = async (payload: { dataTypes: any[], datasets: any[], dataTypeDatasets: any[] }) => {
-      const batch = writeBatch(db);
-      payload.dataTypes.forEach(dt => {
-        const {id, ...data} = dt;
-        const ref = doc(collection(db, 'dataTypes'));
-        batch.set(ref, data);
-      });
-      payload.datasets.forEach(ds => {
-        const {id, ...data} = ds;
-        const ref = doc(collection(db, 'datasets'));
-        batch.set(ref, data);
-      });
-      // This simple mapping won't work for links, as IDs change.
-      // This function would need to be much more complex for a real import, mapping old IDs to new doc IDs.
-      // For now, it will just import the core data.
-      await batch.commit();
-      addNotification("Bulk data import is complex. Data types and datasets imported, but links need manual re-creation.", "error");
-  }
+    const batch = writeBatch(db);
 
-  // Data retrieval helpers
-  const getDataTypeById = useCallback((id: string) => state.dataTypes.find(dt => dt.id === id), [state.dataTypes]);
-  const getDatasetById = useCallback((id: string) => state.datasets.find(ds => ds.id === id), [state.datasets]);
-  
-  const getDatasetsForDataType = useCallback((dataTypeId: string) => {
-    const datasetIds = new Set(state.dataTypeDatasets.filter(link => link.data_type_id === dataTypeId).map(link => link.dataset_id));
-    return state.datasets.filter(ds => datasetIds.has(ds.id));
-  }, [state.dataTypeDatasets, state.datasets]);
+    // 1. Clear existing data
+    for (const coll of ['dataTypes', 'datasets', 'dataTypeDatasets', 'categories']) {
+        const snapshot = await getDocs(collection(db, coll));
+        snapshot.forEach(doc => batch.delete(doc.ref));
+    }
 
-  const getDataTypesForDataset = useCallback((datasetId: string) => {
-    const dataTypeIds = new Set(state.dataTypeDatasets.filter(link => link.dataset_id === datasetId).map(link => link.data_type_id));
-    return state.dataTypes.filter(dt => dataTypeIds.has(dt.id));
-  }, [state.dataTypeDatasets, state.dataTypes]);
+    // 2. Import new data and create ID mappings
+    const dataTypeIdMap: { [oldId: string]: string } = {};
+    for (const dt of importedDataTypes) {
+        const { id: oldId, ...data } = dt;
+        const newDocRef = doc(collection(db, 'dataTypes'));
+        batch.set(newDocRef, data);
+        if (oldId) dataTypeIdMap[oldId] = newDocRef.id;
+    }
 
-  const getDataTypeCountForDataset = useCallback((datasetId: string) => {
+    const datasetIdMap: { [oldId: string]: string } = {};
+    for (const ds of importedDatasets) {
+        const { id: oldId, ...data } = ds;
+        const newDocRef = doc(collection(db, 'datasets'));
+        batch.set(newDocRef, data);
+        if (oldId) datasetIdMap[oldId] = newDocRef.id;
+    }
+
+    // 3. Re-create relationships with new IDs
+    for (const link of importedLinks) {
+        const newDataTypeId = dataTypeIdMap[link.data_type_id];
+        const newDatasetId = datasetIdMap[link.dataset_id];
+        if (newDataTypeId && newDatasetId) {
+            const newLinkRef = doc(collection(db, 'dataTypeDatasets'));
+            batch.set(newLinkRef, { data_type_id: newDataTypeId, dataset_id: newDatasetId });
+        }
+    }
+
+    await batch.commit();
+    addNotification("Data successfully imported!", "success");
+    
+    // Re-create categories from the imported dataTypes
+    const uniqueCategories = [...new Set(importedDataTypes.map(dt => dt.category).filter(Boolean))];
+    for (const categoryName of uniqueCategories) {
+        if (!state.categories.some(c => c.name.toLowerCase() === categoryName.toLowerCase())) {
+            await addDoc(collection(db, 'categories'), { name: categoryName, description: '' });
+        }
+    }
+},
+
+  }), [addNotification, state.categories]);
+
+  const getters = useMemo<DataGetters>(() => ({
+    getDataTypeById: (id) => state.dataTypes.find(dt => dt.id === id),
+    getDatasetById: (id) => state.datasets.find(ds => ds.id === id),
+    getDatasetsForDataType: (dataTypeId) => {
+      const datasetIds = new Set(state.dataTypeDatasets.filter(link => link.data_type_id === dataTypeId).map(link => link.dataset_id));
+      return state.datasets.filter(ds => datasetIds.has(ds.id));
+    },
+    getDataTypesForDataset: (datasetId) => {
+      const dataTypeIds = new Set(state.dataTypeDatasets.filter(link => link.dataset_id === datasetId).map(link => link.data_type_id));
+      return state.dataTypes.filter(dt => dataTypeIds.has(dt.id));
+    },
+    getDataTypeCountForDataset: (datasetId) => {
       return state.dataTypeDatasets.filter(link => link.dataset_id === datasetId).length;
-  }, [state.dataTypeDatasets]);
+    },
+    getCategoryByName: (name) => state.categories.find(c => c.name.toLowerCase() === name.toLowerCase()),
+  }), [state.dataTypes, state.datasets, state.dataTypeDatasets, state.categories]);
 
-  const value = useMemo(() => ({
-    state,
-    addDataType, updateDataType, deleteDataType,
-    addDataset, updateDataset, deleteDataset,
-    addCategory, updateCategory, deleteCategory,
-    getDataTypeById, getDatasetById, getDatasetsForDataType, getDataTypesForDataset, getDataTypeCountForDataset,
-    addNotification, loadData
-  }), [state, addNotification]);
+  const value = useMemo(() => ({ state, actions, getters }), [state, actions, getters]);
 
   return (
     <DataContext.Provider value={value}>
-      {!state.loading ? children : <div className="flex items-center justify-center min-h-screen"><div>Loading Data...</div></div>}
+      {state.loading ? (
+        <div className="flex items-center justify-center min-h-screen"><div>Loading Data...</div></div>
+      ) : children}
     </DataContext.Provider>
   );
 };
 
-// Custom Hook
 export const useData = () => {
   const context = useContext(DataContext);
   if (context === undefined) {
     throw new Error('useData must be used within a DataProvider');
   }
-  return { ...context.state, ...context };
+  return context;
 };
