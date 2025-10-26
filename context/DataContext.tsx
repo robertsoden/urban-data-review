@@ -301,41 +301,67 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Delete existing data from Firestore
           // Use smaller batch size and add delays to avoid rate limiting
-          const BATCH_LIMIT = 400; // Reduced from 500 to be more conservative
+          const BATCH_LIMIT = 250; // Further reduced to prevent hanging
+          const BATCH_DELAY = 200; // Increased delay between batches
           const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
 
           console.log('[Import] Deleting existing data...');
           for (const collectionName of collectionsToDelete) {
-            const snapshot = await getDocs(collection(db, collectionName));
-            const totalDocs = snapshot.docs.length;
-            console.log(`[Import] Deleting ${totalDocs} documents from ${collectionName}...`);
+            try {
+              console.log(`[Import] Fetching documents from ${collectionName}...`);
+              const snapshot = await getDocs(collection(db, collectionName));
+              const totalDocs = snapshot.docs.length;
+              console.log(`[Import] Found ${totalDocs} documents in ${collectionName}, starting deletion...`);
 
-            let deleteBatch = writeBatch(db);
-            let deleteCount = 0;
-            let totalDeleted = 0;
-
-            for (const docSnapshot of snapshot.docs) {
-              deleteBatch.delete(docSnapshot.ref);
-              deleteCount++;
-              totalDeleted++;
-
-              if (deleteCount >= BATCH_LIMIT) {
-                console.log(`[Import] Committing batch delete (${totalDeleted}/${totalDocs})...`);
-                await deleteBatch.commit();
-                // Small delay to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 100));
-                deleteBatch = writeBatch(db);
-                deleteCount = 0;
+              if (totalDocs === 0) {
+                console.log(`[Import] No documents to delete in ${collectionName}, skipping...`);
+                continue;
               }
-            }
 
-            // Commit any remaining deletes
-            if (deleteCount > 0) {
-              console.log(`[Import] Committing final batch delete for ${collectionName} (${totalDeleted}/${totalDocs})...`);
-              await deleteBatch.commit();
-              await new Promise(resolve => setTimeout(resolve, 100));
+              let deleteBatch = writeBatch(db);
+              let deleteCount = 0;
+              let totalDeleted = 0;
+              let batchNumber = 1;
+
+              for (const docSnapshot of snapshot.docs) {
+                deleteBatch.delete(docSnapshot.ref);
+                deleteCount++;
+                totalDeleted++;
+
+                if (deleteCount >= BATCH_LIMIT) {
+                  console.log(`[Import] Committing delete batch #${batchNumber} for ${collectionName} (${totalDeleted}/${totalDocs})...`);
+                  try {
+                    await deleteBatch.commit();
+                    console.log(`[Import] Batch #${batchNumber} committed successfully`);
+                  } catch (batchError) {
+                    console.error(`[Import] Error committing batch #${batchNumber}:`, batchError);
+                    throw batchError;
+                  }
+                  // Delay to avoid rate limiting
+                  await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+                  deleteBatch = writeBatch(db);
+                  deleteCount = 0;
+                  batchNumber++;
+                }
+              }
+
+              // Commit any remaining deletes
+              if (deleteCount > 0) {
+                console.log(`[Import] Committing final delete batch #${batchNumber} for ${collectionName} (${totalDeleted}/${totalDocs})...`);
+                try {
+                  await deleteBatch.commit();
+                  console.log(`[Import] Final batch committed successfully`);
+                } catch (batchError) {
+                  console.error(`[Import] Error committing final batch:`, batchError);
+                  throw batchError;
+                }
+                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+              }
+              console.log(`[Import] ✓ Completed deletion of ${totalDocs} documents from ${collectionName}`);
+            } catch (error) {
+              console.error(`[Import] Failed to delete from ${collectionName}:`, error);
+              throw new Error(`Failed to delete existing ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
-            console.log(`[Import] Completed deletion of ${collectionName}`);
           }
 
           console.log('[Import] Deletion complete, starting data import...');
@@ -346,16 +372,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           let operationCount = 0;
           let totalOperations = data.dataTypes.length + data.datasets.length + categories.length + dataTypeDatasets.length;
           let completedOperations = 0;
+          let writeBatchNumber = 1;
 
           const commitBatchIfNeeded = async (force: boolean = false) => {
             if (force || operationCount >= BATCH_LIMIT) {
               if (operationCount > 0) {
-                console.log(`[Import] Committing batch (${completedOperations}/${totalOperations} operations)...`);
-                await batch.commit();
-                // Small delay to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 100));
+                console.log(`[Import] Committing write batch #${writeBatchNumber} (${completedOperations}/${totalOperations} items)...`);
+                try {
+                  await batch.commit();
+                  console.log(`[Import] Write batch #${writeBatchNumber} committed successfully`);
+                } catch (batchError) {
+                  console.error(`[Import] Error committing write batch #${writeBatchNumber}:`, batchError);
+                  throw batchError;
+                }
+                // Delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
                 batch = writeBatch(db);
                 operationCount = 0;
+                writeBatchNumber++;
               }
             }
           };
@@ -370,7 +404,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] DataTypes saved');
+          console.log('[Import] ✓ DataTypes saved');
 
           // Save datasets
           console.log(`[Import] Saving ${data.datasets.length} datasets...`);
@@ -382,7 +416,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] Datasets saved');
+          console.log('[Import] ✓ Datasets saved');
 
           // Save categories
           console.log(`[Import] Saving ${categories.length} categories...`);
@@ -394,7 +428,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] Categories saved');
+          console.log('[Import] ✓ Categories saved');
 
           // Save dataTypeDatasets
           console.log(`[Import] Saving ${dataTypeDatasets.length} dataTypeDatasets...`);
@@ -406,7 +440,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] DataTypeDatasets saved');
+          console.log('[Import] ✓ DataTypeDatasets saved');
 
           console.log('[Import] All Firestore operations complete, updating state...');
 
