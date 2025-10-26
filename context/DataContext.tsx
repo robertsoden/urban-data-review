@@ -9,16 +9,16 @@ interface DataContextType {
   notifications: Notification[];
   loading: boolean;
   error: Error | null;
-  addDataType: (dataType: Omit<DataType, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  addDataType: (dataType: Omit<DataType, 'id' | 'created_at'>) => Promise<void>;
   updateDataType: (id: string, dataType: Partial<DataType>) => Promise<void>;
   deleteDataType: (id: string) => Promise<void>;
-  addDataset: (dataset: Omit<Dataset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  addDataset: (dataset: Omit<Dataset, 'id' | 'created_at'>) => Promise<void>;
   updateDataset: (id: string, dataset: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
   addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  addNotification: (message: string, type: 'success' | 'error' | 'info') => void;
+  addNotification: (message: string, type: 'success' | 'error') => void;
   clearNotification: (id: number) => void;
 }
 
@@ -53,7 +53,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadData();
   }, []);
 
-  const addNotification = (message: string, type: 'success' | 'error' | 'info') => {
+  const addNotification = (message: string, type: 'success' | 'error') => {
     const newNotification: Notification = {
       id: Date.now(),
       message,
@@ -66,19 +66,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const addDataType = async (dataType: Omit<DataType, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addDataType = async (dataType: Omit<DataType, 'id' | 'created_at'>) => {
     const newDataType: DataType = {
       ...dataType,
       id: new Date().toISOString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      created_at: new Date().toISOString(),
     };
     setDataTypes(prev => [...prev, newDataType]);
     addNotification('Data type added successfully', 'success');
   };
 
   const updateDataType = async (id: string, dataType: Partial<DataType>) => {
-    setDataTypes(prev => prev.map(dt => dt.id === id ? { ...dt, ...dataType, updatedAt: new Date() } : dt));
+    setDataTypes(prev => prev.map(dt => dt.id === id ? { ...dt, ...dataType } : dt));
     addNotification('Data type updated successfully', 'success');
   };
 
@@ -87,19 +86,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addNotification('Data type deleted successfully', 'success');
   };
 
-  const addDataset = async (dataset: Omit<Dataset, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addDataset = async (dataset: Omit<Dataset, 'id' | 'created_at'>) => {
     const newDataset: Dataset = {
       ...dataset,
       id: new Date().toISOString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      created_at: new Date().toISOString(),
     };
     setDatasets(prev => [...prev, newDataset]);
     addNotification('Dataset added successfully', 'success');
   };
 
   const updateDataset = async (id: string, dataset: Partial<Dataset>) => {
-    setDatasets(prev => prev.map(ds => ds.id === id ? { ...ds, ...dataset, updatedAt: new Date() } : ds));
+    setDatasets(prev => prev.map(ds => ds.id === id ? { ...ds, ...dataset } : ds));
     addNotification('Dataset updated successfully', 'success');
   };
 
