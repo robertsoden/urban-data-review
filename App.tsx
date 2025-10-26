@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useData } from './context/DataContext';
-import { useAuth } from './context/AuthContext';
 import { Page } from './types';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
@@ -15,33 +14,18 @@ import Categories from './pages/Categories';
 import ManageCategories from './pages/ManageCategories';
 import ImportExport from './pages/ImportExport';
 import NotificationPopup from './components/NotificationPopup';
-import LoginPage from './pages/LoginPage';
-import { HomeIcon, DocumentTextIcon, DatabaseIcon, ChartBarIcon, CollectionIcon, SwitchHorizontalIcon, LogoutIcon } from './components/Icons';
+import { HomeIcon, DocumentTextIcon, DatabaseIcon, ChartBarIcon, CollectionIcon, SwitchHorizontalIcon } from './components/Icons';
 
 
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>({ name: 'dashboard' });
   const { notifications } = useData();
-  const { user, loading, logout } = useAuth();
 
   const navigate = (newPage: Page) => {
     setPage(newPage);
     window.scrollTo(0, 0);
   };
   
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl font-semibold text-slate-700">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginPage />;
-  }
-
-
   const renderPage = () => {
     switch (page.name) {
       case 'dashboard':
@@ -117,13 +101,6 @@ const App: React.FC = () => {
                 <NavLink targetPage={{name: 'progress-report'}} icon={<ChartBarIcon className="w-5 h-5" />}>Progress Report</NavLink>
                 <NavLink targetPage={{name: 'import-export'}} icon={<SwitchHorizontalIcon className="w-5 h-5" />}>Import/Export</NavLink>
             </nav>
-             <div className="mt-auto shrink-0">
-                <div className="border-t border-slate-200 pt-4">
-                  <p className="text-xs text-slate-500 truncate" title={user.email || 'User'}>Logged in as:</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate" title={user.email || 'User'}>{user.displayName || user.email}</p>
-                   <NavLink onClick={logout} icon={<LogoutIcon className="w-5 h-5" />}>Logout</NavLink>
-                </div>
-            </div>
         </aside>
 
         <main className="flex-1 ml-64 p-6 sm:p-8 lg:p-10">
