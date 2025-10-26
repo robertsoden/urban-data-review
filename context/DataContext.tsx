@@ -43,6 +43,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setLoading(true);
 
+        // Check if Firebase is configured
+        if (!db) {
+          console.log('Firebase not configured, using mock data');
+          setDataTypes(mockDataTypes);
+          setDatasets(mockDatasets);
+          setCategories(mockCategories);
+          setDataTypeDatasets([]);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+
         // Try to load from Firestore first
         const dataTypesSnapshot = await getDocs(collection(db, 'dataTypes'));
         const datasetsSnapshot = await getDocs(collection(db, 'datasets'));
@@ -77,7 +89,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCategories(mockCategories);
         setDataTypeDatasets([]);
         setError(null); // Don't show error to user, just fall back silently
-      } finally {
+      } finally{
         setLoading(false);
       }
     };
