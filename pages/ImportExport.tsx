@@ -9,42 +9,18 @@ interface ImportExportProps {
 
 
 const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
-    const { getAllData, importData, addNotification } = useData();
+    const { exportData, importData, addNotification } = useData();
     const [isImporting, setIsImporting] = useState(false);
 
-    const handleExport = () => {
-        const data = getAllData();
-        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
-        const link = document.createElement('a');
-        link.href = jsonString;
-        link.download = `urban_data_catalog_export_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        addNotification("Data exported successfully.", "success");
-    }
-
-    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
+        if (window.confirm("Are you sure you want to import this file? This will overwrite all existing data.")) {
+            setIsImporting(true);
             try {
-                const text = e.target?.result;
-                if (typeof text !== 'string') {
-                    throw new Error("File content is not readable.");
-                }
-                const data = JSON.parse(text);
-
-                // Basic validation
-                if (!data.dataTypes || !data.datasets || !data.categories || !data.dataTypeDatasets) {
-                    throw new Error("Invalid JSON structure. Missing required keys.");
-                }
-
-                if (window.confirm("Are you sure you want to import this file? This will overwrite all existing data.")) {
-                    setIsImporting(true);
-                    await importData(data);
-                    addNotification("Data imported successfully!", "success");
-                }
+                await importData(file);
+                addNotification("Data imported successfully!", "success");
             } catch (error: any) {
                 console.error("Import failed:", error);
                 addNotification(`Import failed: ${error.message}`, "error");
@@ -55,8 +31,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                     event.target.value = '';
                 }
             }
-        };
-        reader.readAsText(file);
+        } else {
+             // Reset file input if user cancels
+            if (event.target) {
+                event.target.value = '';
+            }
+        }
     }
 
     return (
@@ -67,7 +47,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                     Export all your data (Data Types, Datasets, Categories, and their relationships) into a single JSON file. This file can be used as a backup or for importing into another instance of this application.
                 </p>
                 <button 
-                    onClick={handleExport}
+                    onClick={exportData}
                     className="bg-button-blue text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors shadow-sm"
                 >
                     Export All Data as JSON

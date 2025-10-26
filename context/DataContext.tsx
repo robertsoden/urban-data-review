@@ -18,6 +18,9 @@ import {
   Category,
   DataTypeDataset,
   Notification,
+  Priority,
+  CompletionStatus,
+  RdlsStatus,
 } from '../types';
 import { useAuth } from './AuthContext';
 
@@ -42,9 +45,8 @@ interface DataContextType {
   updateCategory: (category: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   addNotification: (message: string, type: 'success' | 'error') => void;
-  // For Import/Export
-  getAllData: () => { dataTypes: DataType[], datasets: Dataset[], categories: Category[], dataTypeDatasets: DataTypeDataset[] };
-  importData: (data: { dataTypes: DataType[], datasets: Dataset[], categories: Category[], dataTypeDatasets: DataTypeDataset[] }) => Promise<void>;
+  exportData: () => void;
+  importData: (file: File) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -83,10 +85,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }),
       onSnapshot(query(collection(db, getCollectionPath('categories'))), (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-        // Ensure "Uncategorized" is always present if there are any data types, but don't save it to DB
-        if (!data.find(c => c.name === 'Uncategorized')) {
-            data.push({ id: 'uncategorized', name: 'Uncategorized', description: 'Default category for items without a specific category.' });
-        }
         setCategories(data);
       }),
       onSnapshot(query(collection(db, getCollectionPath('data_type_datasets'))), (snapshot) => {
@@ -95,9 +93,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }),
     ];
     
-    // Once all initial data is loaded, set loading to false.
-    // This is a simplification; a more robust solution might use Promise.all over getDocs once.
-    const timer = setTimeout(() => setLoading(false), 1500); // Failsafe loader hide
+    const timer = setTimeout(() => setLoading(false), 1500);
 
     return () => {
         unsubscribes.forEach(unsub => unsub());
@@ -137,18 +133,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const fieldToQuery = itemType === 'dataType' ? 'data_type_id' : 'dataset_id';
     
-    // Delete existing links for this item
     const q = query(linksCollectionRef, where(fieldToQuery, "==", itemId));
     const existingLinksSnapshot = await getDocs(q);
     existingLinksSnapshot.forEach(doc => batch.delete(doc.ref));
 
-    // Add new links
     linkedIds.forEach(linkedId => {
-      const newLinkDoc = doc(linksCollectionRef);
+      const newLinkDocRef = doc(linksCollectionRef);
       const linkData = itemType === 'dataType' 
         ? { data_type_id: itemId, dataset_id: linkedId }
         : { data_type_id: linkedId, dataset_id: itemId };
-      batch.set(newLinkDoc, linkData);
+      batch.set(newLinkDocRef, linkData);
     });
 
     await batch.commit();
@@ -156,10 +150,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addDataType = async ({ dataType, linkedDatasetIds }: { dataType: Omit<DataType, 'id' | 'created_at'>; linkedDatasetIds: string[] }) => {
     if (!user) throw new Error("No user logged in");
-    const newDataType = {
-      ...dataType,
-      created_at: new Date().toISOString(),
-    };
+    const newDataType = { ...dataType, created_at: new Date().toISOString() };
     const docRef = await addDoc(collection(db, getCollectionPath('data_types')), newDataType);
     await manageLinks(docRef.id, linkedDatasetIds, 'dataType');
   };
@@ -174,15 +165,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const deleteDataType = async (id: string) => {
     if (!user) throw new Error("No user logged in");
     await deleteDoc(doc(db, getCollectionPath('data_types'), id));
-    await manageLinks(id, [], 'dataType'); // This will delete all associated links
+    await manageLinks(id, [], 'dataType');
   };
   
   const addDataset = async ({ dataset, linkedDataTypeIds }: { dataset: Omit<Dataset, 'id' | 'created_at'>; linkedDataTypeIds: string[] }) => {
     if (!user) throw new Error("No user logged in");
-    const newDataset = {
-        ...dataset,
-        created_at: new Date().toISOString(),
-    };
+    const newDataset = { ...dataset, created_at: new Date().toISOString() };
     const docRef = await addDoc(collection(db, getCollectionPath('datasets')), newDataset);
     await manageLinks(docRef.id, linkedDataTypeIds, 'dataset');
   };
@@ -218,68 +206,139 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const categoryToDelete = categories.find(c => c.id === id);
     if (!categoryToDelete) return;
     
-    // Find datatypes with this category and update them to 'Uncategorized'
     const dataTypesToUpdateQuery = query(collection(db, getCollectionPath('data_types')), where("category", "==", categoryToDelete.name));
     const dataTypesSnapshot = await getDocs(dataTypesToUpdateQuery);
     dataTypesSnapshot.forEach(doc => {
       batch.update(doc.ref, { category: 'Uncategorized' });
     });
     
-    // Delete the category document
     batch.delete(doc(db, getCollectionPath('categories'), id));
     
     await batch.commit();
   };
-  
-    const getAllData = () => {
-        return { dataTypes, datasets, categories, dataTypeDatasets };
+
+    const exportData = () => {
+        const data = { dataTypes, datasets, categories: categories.filter(c => c.id !== 'uncategorized'), dataTypeDatasets };
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+        const link = document.createElement('a');
+        link.href = jsonString;
+        link.download = `urban_data_catalog_export_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        addNotification("Data exported successfully.", "success");
+    };
+
+    const sanitizeDataType = (dt: any): Omit<DataType, 'id'> => {
+        let sanitizedDT = { ...dt };
+        delete sanitizedDT.id;
+
+        if (!Object.values(Priority).includes(sanitizedDT.priority)) {
+            sanitizedDT.priority = Priority.Unassigned;
+        }
+        if (!Object.values(CompletionStatus).includes(sanitizedDT.completion_status)) {
+            sanitizedDT.completion_status = CompletionStatus.NotStarted;
+        }
+        
+        // Handle abbreviations and invalid values for rdls_can_handle
+        const rdlsMap: { [key: string]: RdlsStatus } = {
+            "Y": RdlsStatus.Yes,
+            "N": RdlsStatus.No,
+            "P": RdlsStatus.Partial,
+            "C": RdlsStatus.Check,
+        };
+
+        if (rdlsMap[sanitizedDT.rdls_can_handle]) {
+            sanitizedDT.rdls_can_handle = rdlsMap[sanitizedDT.rdls_can_handle];
+        } else if (!Object.values(RdlsStatus).includes(sanitizedDT.rdls_can_handle)) {
+            sanitizedDT.rdls_can_handle = RdlsStatus.Unassigned;
+        }
+
+        return sanitizedDT;
     }
 
-    const importData = async (data: { dataTypes: DataType[], datasets: Dataset[], categories: Category[], dataTypeDatasets: DataTypeDataset[] }) => {
+    const importData = async (file: File) => {
         if (!user) throw new Error("No user logged in");
-        
+
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        if (!data.dataTypes || !data.datasets || !data.categories || !data.dataTypeDatasets) {
+            throw new Error("Invalid JSON structure. Missing required keys.");
+        }
+
+        // 1. Clear all existing data
         const collections = ['data_types', 'datasets', 'categories', 'data_type_datasets'];
-        
-        // Clear all existing data
         const deleteBatch = writeBatch(db);
         for (const coll of collections) {
             const snapshot = await getDocs(collection(db, getCollectionPath(coll)));
             snapshot.forEach(doc => deleteBatch.delete(doc.ref));
         }
         await deleteBatch.commit();
-        
-        // Add new data
-        const addBatch = writeBatch(db);
-        
-        data.dataTypes.forEach(item => {
-            const { id, ...rest } = item;
-            const docRef = doc(db, getCollectionPath('data_types'), id);
-            addBatch.set(docRef, rest);
-        });
-        
-        data.datasets.forEach(item => {
-            const { id, ...rest } = item;
-            const docRef = doc(db, getCollectionPath('datasets'), id);
-            addBatch.set(docRef, rest);
-        });
 
-        data.categories.forEach(item => {
-            const { id, ...rest } = item;
-            // Don't save the 'uncategorized' placeholder
-            if (id !== 'uncategorized') {
-              const docRef = doc(db, getCollectionPath('categories'), id);
-              addBatch.set(docRef, rest);
+        // 2. Import new data with ID mapping
+        const batch = writeBatch(db);
+        const oldToNewIdMap = new Map<string, string>();
+
+        // Process Data Types
+        for (const dt of data.dataTypes) {
+            // FIX: Use String() for safer type conversion from potentially untrusted JSON.
+            const oldId = String(dt.id);
+            const sanitizedData = sanitizeDataType(dt);
+            const newDocRef = doc(collection(db, getCollectionPath('data_types')));
+            batch.set(newDocRef, sanitizedData);
+            oldToNewIdMap.set(oldId, newDocRef.id);
+        }
+
+        // Process Datasets
+        for (const ds of data.datasets) {
+            // FIX: Use String() for safer type conversion from potentially untrusted JSON.
+            const oldId = String(ds.id);
+            const { id, ...rest } = ds;
+            const newDocRef = doc(collection(db, getCollectionPath('datasets')));
+            batch.set(newDocRef, rest);
+            oldToNewIdMap.set(oldId, newDocRef.id);
+        }
+        
+        // Process Categories
+        const importedCategories = data.categories.map((c: any) => c.name);
+        for (const cat of data.categories) {
+            const { id, ...rest } = cat;
+            const newDocRef = doc(collection(db, getCollectionPath('categories')));
+            batch.set(newDocRef, rest);
+        }
+
+        // Sanitize data types to ensure their categories exist
+        for (const dt of data.dataTypes) {
+             if (!importedCategories.includes(dt.category)) {
+                 // FIX: Use String() for safer type conversion from potentially untrusted JSON.
+                 const newId = oldToNewIdMap.get(String(dt.id));
+                 if (newId) {
+                     const docRef = doc(db, getCollectionPath('data_types'), newId);
+                     batch.update(docRef, { category: 'Uncategorized' });
+                 }
+             }
+        }
+
+        await batch.commit();
+        
+        // 3. Process links using the ID map
+        const linkBatch = writeBatch(db);
+        for (const link of data.dataTypeDatasets) {
+            // FIX: Use String() for safer type conversion from potentially untrusted JSON.
+            const newDataTypeId = oldToNewIdMap.get(String(link.data_type_id));
+            // FIX: Use String() for safer type conversion from potentially untrusted JSON.
+            const newDatasetId = oldToNewIdMap.get(String(link.dataset_id));
+
+            if (newDataTypeId && newDatasetId) {
+                const newLinkRef = doc(collection(db, getCollectionPath('data_type_datasets')));
+                linkBatch.set(newLinkRef, {
+                    data_type_id: newDataTypeId,
+                    dataset_id: newDatasetId,
+                    relationship_notes: link.relationship_notes || ""
+                });
             }
-        });
-
-        data.dataTypeDatasets.forEach(item => {
-            const { id, ...rest } = item;
-            const docRef = doc(db, getCollectionPath('data_type_datasets'), id);
-            addBatch.set(docRef, rest);
-        });
-
-        await addBatch.commit();
-    }
+        }
+        await linkBatch.commit();
+    };
 
 
   const value = {
@@ -303,7 +362,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateCategory,
     deleteCategory,
     addNotification,
-    getAllData,
+    exportData,
     importData,
   };
 

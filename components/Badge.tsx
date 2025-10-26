@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CompletionStatus, Priority, RdlsStatus } from '../types';
 
@@ -49,7 +48,7 @@ export const RdlsStatusBadge: React.FC<{ status: RdlsStatus }> = ({ status }) =>
         [RdlsStatus.Partial]: "Partial",
         [RdlsStatus.Check]: "Check",
         [RdlsStatus.Unassigned]: "N/A"
-    }
+    };
     return <Badge text={textMap[status]} colorClass={colorMap[status]} />;
 }
 
