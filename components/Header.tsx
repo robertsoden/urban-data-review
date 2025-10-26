@@ -2,34 +2,37 @@ import React from 'react';
 import { Page } from '../types';
 
 interface HeaderProps {
-  currentPage: Page;
+  navigate: (page: Page) => void;
 }
 
-const getPageTitle = (page: Page): string => {
-    switch(page.name) {
-        case 'dashboard': return 'Dashboard';
-        case 'data-types': return 'Data Types';
-        case 'data-type-detail': return 'Data Type Details';
-        case 'data-type-add': return 'Add New Data Type';
-        case 'data-type-edit': return 'Edit Data Type';
-        case 'datasets': return 'Datasets';
-        case 'dataset-detail': return 'Dataset Details';
-        case 'dataset-add': return 'Add New Dataset';
-        case 'dataset-edit': return 'Edit Dataset';
-        case 'categories': return 'Categories';
-        case 'manage-categories': return 'Manage Categories';
-        case 'progress-report': return 'Progress Report';
-        case 'import-export': return 'Import / Export';
-        default: return 'Urban Data Catalog';
-    }
-}
-
-const Header: React.FC<HeaderProps> = ({ currentPage }) => {
+const Header: React.FC<HeaderProps> = ({ navigate }) => {
   return (
-    <header className="bg-white shadow-sm rounded-lg p-4">
-        <h1 className="text-2xl font-semibold text-gray-900">{getPageTitle(currentPage)}</h1>
+    <header className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <div 
+            className="text-xl font-bold text-primary-600 cursor-pointer"
+            onClick={() => navigate({ name: 'dashboard' })}
+          >
+            Urban Data Review
+          </div>
+          <nav className="hidden md:flex gap-4">
+            <NavItem onClick={() => navigate({ name: 'dashboard' })}>Dashboard</NavItem>
+            <NavItem onClick={() => navigate({ name: 'datasets' })}>Datasets</NavItem>
+            <NavItem onClick={() => navigate({ name: 'data-types' })}>Data Types</NavItem>
+            <NavItem onClick={() => navigate({ name: 'categories' })}>Categories</NavItem>
+            <NavItem onClick={() => navigate({ name: 'progress-report' })}>Progress</NavItem>
+          </nav>
+        </div>
+      </div>
     </header>
   );
 };
+
+const NavItem: React.FC<{onClick: () => void, children: React.ReactNode}> = ({ onClick, children }) => (
+    <button onClick={onClick} className="text-neutral-600 hover:text-primary-600 font-medium transition-colors">
+        {children}
+    </button>
+)
 
 export default Header;

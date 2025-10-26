@@ -14,12 +14,9 @@ import Categories from './pages/Categories';
 import ManageCategories from './pages/ManageCategories';
 import ImportExport from './pages/ImportExport';
 import NotificationPopup from './components/NotificationPopup';
-import { HomeIcon, DocumentTextIcon, DatabaseIcon, ChartBarIcon, CollectionIcon, SwitchHorizontalIcon } from './components/Icons';
-
 
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>({ name: 'dashboard' });
-  const { notifications } = useData();
 
   const navigate = (newPage: Page) => {
     setPage(newPage);
@@ -62,54 +59,14 @@ const App: React.FC = () => {
         return <Dashboard navigate={navigate} />;
     }
   };
-  
-  const NavLink: React.FC<{
-    targetPage?: Page;
-    onClick?: () => void;
-    icon: React.ReactNode;
-    children: React.ReactNode;
-  }> = ({ targetPage, onClick, icon, children }) => {
-    const isActive = targetPage && page.name === targetPage.name;
-    const activeClasses = 'bg-slate-200 text-slate-900';
-    const inactiveClasses = 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
-    
-    const clickHandler = onClick ? onClick : () => targetPage && navigate(targetPage);
-
-    return (
-      <button onClick={clickHandler} className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive ? activeClasses : inactiveClasses}`}>
-          <div className="mr-3">{icon}</div>
-          {children}
-      </button>
-    );
-  };
-
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-neutral-50 text-neutral-800 font-sans">
       <NotificationPopup />
-      <div className="flex">
-        <aside className="w-64 bg-white border-r border-slate-200 p-4 fixed h-full flex flex-col">
-            <div className="flex items-center mb-8 shrink-0">
-                <DatabaseIcon className="w-8 h-8 text-button-blue" />
-                <h1 className="ml-2 text-xl font-bold text-slate-800">Urban Data Catalog</h1>
-            </div>
-            <nav className="space-y-2 flex-grow">
-                <NavLink targetPage={{name: 'dashboard'}} icon={<HomeIcon className="w-5 h-5" />}>Dashboard</NavLink>
-                <NavLink targetPage={{name: 'data-types'}} icon={<DocumentTextIcon className="w-5 h-5" />}>Data Types</NavLink>
-                <NavLink targetPage={{name: 'datasets'}} icon={<DatabaseIcon className="w-5 h-5" />}>Datasets</NavLink>
-                <NavLink targetPage={{name: 'categories'}} icon={<CollectionIcon className="w-5 h-5" />}>Categories</NavLink>
-                <NavLink targetPage={{name: 'progress-report'}} icon={<ChartBarIcon className="w-5 h-5" />}>Progress Report</NavLink>
-                <NavLink targetPage={{name: 'import-export'}} icon={<SwitchHorizontalIcon className="w-5 h-5" />}>Import/Export</NavLink>
-            </nav>
-        </aside>
-
-        <main className="flex-1 ml-64 p-6 sm:p-8 lg:p-10">
-          <Header currentPage={page} />
-          <div className="mt-8">
-            {renderPage()}
-          </div>
-        </main>
-      </div>
+      <Header navigate={navigate} />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderPage()}
+      </main>
     </div>
   );
 };
