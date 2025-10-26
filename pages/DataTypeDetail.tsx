@@ -2,7 +2,7 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
-import Card, { CardHeader } from '../components/Card';
+import { Card, CardHeader } from '../components/Card';
 import { CompletionStatusBadge, PriorityBadge, RdlsStatusBadge } from '../components/Badge';
 
 interface DataTypeDetailProps {

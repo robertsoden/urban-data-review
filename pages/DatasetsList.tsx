@@ -1,7 +1,7 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { Page, Dataset } from '../types';
-import Card from '../components/Card';
+import { Card } from '../components/Card';
 
 interface DatasetsListProps {
   navigate: (page: Page) => void;

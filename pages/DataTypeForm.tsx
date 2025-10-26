@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, Priority, CompletionStatus, RdlsStatus } from '../types';
-import Card from '../components/Card';
+import { Card } from '../components/Card';
 
 interface DataTypeFormProps {
   navigate: (page: Page) => void;
