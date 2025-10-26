@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DataType, Dataset, Category, DataTypeDataset, Notification } from '../types';
 import { mockDataTypes, mockDatasets, mockCategories } from '../data/mockData';
-import { db } from '../firebase';
+import { db, firebaseConfig } from '../firebase';
 import { collection, getDocs, doc, setDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 
 interface DataContextType {
@@ -183,6 +183,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const importData = async (file: File) => {
     return new Promise<void>((resolve, reject) => {
+      // Check Firebase configuration before starting
+      if (!firebaseConfig.projectId) {
+        reject(new Error(
+          'Firebase is not configured. Please add your Firebase credentials to the .env file. ' +
+          'See .env.example for required environment variables.'
+        ));
+        return;
+      }
+
       const reader = new FileReader();
 
       reader.onload = async (event) => {
