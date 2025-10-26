@@ -1,14 +1,40 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { Page, Dataset } from '../types';
-import { Card } from '../components/Card';
+import { Page } from '../types';
+import { Card, CardContent } from '../components/Card';
 
 interface DatasetsListProps {
   navigate: (page: Page) => void;
 }
 
 const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
-  const { datasets, getDataTypeCountForDataset } = useData();
+  const { datasets, dataTypes, categories, getDataTypesForDataset } = useData();
+
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [dataTypeFilter, setDataTypeFilter] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredDatasets = useMemo(() => {
+    return datasets.filter(ds => {
+      // Get linked data types for this dataset
+      const linkedDataTypes = getDataTypesForDataset(ds.id);
+
+      // Category filter - check if any linked data type matches the category
+      const categoryMatch = categoryFilter === 'All' ||
+        linkedDataTypes.some(dt => dt.category === categoryFilter);
+
+      // Data type filter - check if the specific data type is linked
+      const dataTypeMatch = dataTypeFilter === 'All' ||
+        linkedDataTypes.some(dt => dt.id === dataTypeFilter);
+
+      // Search filter
+      const searchMatch = searchTerm === '' ||
+        ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ds.source_organization.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return categoryMatch && dataTypeMatch && searchMatch;
+    });
+  }, [datasets, categoryFilter, dataTypeFilter, searchTerm, getDataTypesForDataset]);
 
   return (
     <div className="space-y-6">
@@ -23,20 +49,60 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
       </div>
 
       <Card>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="category-filter" className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
+              <select
+                id="category-filter"
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+              >
+                <option value="All">All Categories</option>
+                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="datatype-filter" className="block text-sm font-medium text-neutral-700 mb-1">Data Type</label>
+              <select
+                id="datatype-filter"
+                value={dataTypeFilter}
+                onChange={e => setDataTypeFilter(e.target.value)}
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+              >
+                <option value="All">All Data Types</option>
+                {dataTypes.map(dt => <option key={dt.id} value={dt.id}>{dt.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="search-filter" className="block text-sm font-medium text-neutral-700 mb-1">Search</label>
+              <input
+                id="search-filter"
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="by name or source..."
+                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Source</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Format</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Coverage</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider text-center">Linked Types</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Source Organization</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Type</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {datasets.map(ds => (
+              {filteredDatasets.map(ds => (
                 <tr key={ds.id} className="hover:bg-neutral-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-neutral-900">
                     <span
@@ -48,15 +114,12 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
                     {ds.is_primary_example && (
                       <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Primary Example</span>
                     )}
+                    {ds.is_validated && (
+                      <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Validated</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-neutral-600">{ds.source_organization}</td>
-                  <td className="px-4 py-3">
-                    <span className="font-mono bg-neutral-200 text-neutral-800 text-xs px-2 py-1 rounded">{ds.format}</span>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600">{ds.geographic_coverage}</td>
-                  <td className="px-4 py-3 text-center font-medium text-neutral-700">
-                    {getDataTypeCountForDataset(ds.id)}
-                  </td>
+                  <td className="px-4 py-3 text-neutral-600">{ds.source_type}</td>
                   <td className="px-4 py-3 text-right">
                     <a
                       href={ds.url}
@@ -69,10 +132,10 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
                   </td>
                 </tr>
               ))}
-              {datasets.length === 0 && (
+              {filteredDatasets.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-neutral-500">
-                    No datasets have been added yet.
+                  <td colSpan={4} className="text-center py-12 text-neutral-500">
+                    No datasets match the current filters.
                   </td>
                 </tr>
               )}
