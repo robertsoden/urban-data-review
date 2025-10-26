@@ -25,6 +25,10 @@ interface DataContextType {
   clearNotification: (id: number) => void;
   exportData: () => void;
   importData: (file: File) => Promise<void>;
+  getDataTypeById: (id: string) => DataType | undefined;
+  getDatasetById: (id: string) => Dataset | undefined;
+  getDatasetsForDataType: (dataTypeId: string) => Dataset[];
+  getDataTypeCountForDataset: (datasetId: string) => number;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -191,6 +195,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     URL.revokeObjectURL(url);
 
     addNotification('Data exported successfully', 'success');
+  };
+
+  // Helper functions
+  const getDataTypeById = (id: string): DataType | undefined => {
+    return dataTypes.find(dt => dt.id === id);
+  };
+
+  const getDatasetById = (id: string): Dataset | undefined => {
+    return datasets.find(ds => ds.id === id);
+  };
+
+  const getDatasetsForDataType = (dataTypeId: string): Dataset[] => {
+    const links = dataTypeDatasets.filter(link => link.data_type_id === dataTypeId);
+    return links.map(link => datasets.find(ds => ds.id === link.dataset_id)).filter(Boolean) as Dataset[];
+  };
+
+  const getDataTypeCountForDataset = (datasetId: string): number => {
+    return dataTypeDatasets.filter(link => link.dataset_id === datasetId).length;
   };
 
   const importData = async (file: File) => {
@@ -472,6 +494,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearNotification,
       exportData,
       importData,
+      getDataTypeById,
+      getDatasetById,
+      getDatasetsForDataType,
+      getDataTypeCountForDataset,
     }}>
       {children}
     </DataContext.Provider>
