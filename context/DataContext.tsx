@@ -20,6 +20,8 @@ interface DataContextType {
   deleteCategory: (id: string) => Promise<void>;
   addNotification: (message: string, type: 'success' | 'error') => void;
   clearNotification: (id: number) => void;
+  exportData: () => void;
+  importData: (file: File) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -125,6 +127,66 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addNotification('Category deleted successfully', 'success');
   };
 
+  const exportData = () => {
+    const data = {
+      dataTypes,
+      datasets,
+      categories,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `urban-data-catalog-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    addNotification('Data exported successfully', 'success');
+  };
+
+  const importData = async (file: File) => {
+    return new Promise<void>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          const data = JSON.parse(content);
+
+          // Validate the imported data structure
+          if (!data.dataTypes || !data.datasets || !data.categories) {
+            throw new Error('Invalid data format: missing required fields');
+          }
+
+          if (!Array.isArray(data.dataTypes) || !Array.isArray(data.datasets) || !Array.isArray(data.categories)) {
+            throw new Error('Invalid data format: fields must be arrays');
+          }
+
+          // Set the imported data
+          setDataTypes(data.dataTypes);
+          setDatasets(data.datasets);
+          setCategories(data.categories);
+
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+
+      reader.readAsText(file);
+    });
+  };
+
   return (
     <DataContext.Provider value={{
       dataTypes,
@@ -144,6 +206,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteCategory,
       addNotification,
       clearNotification,
+      exportData,
+      importData,
     }}>
       {children}
     </DataContext.Provider>
