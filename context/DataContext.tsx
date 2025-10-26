@@ -293,19 +293,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           // Delete existing data from Firestore
+          // Must chunk deletes to avoid Firestore's 500 operation limit
+          const BATCH_LIMIT = 500;
           const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
+
           for (const collectionName of collectionsToDelete) {
             const snapshot = await getDocs(collection(db, collectionName));
-            const deleteBatch = writeBatch(db);
-            snapshot.docs.forEach(doc => {
-              deleteBatch.delete(doc.ref);
-            });
-            await deleteBatch.commit();
+            let deleteBatch = writeBatch(db);
+            let deleteCount = 0;
+
+            for (const docSnapshot of snapshot.docs) {
+              deleteBatch.delete(docSnapshot.ref);
+              deleteCount++;
+
+              if (deleteCount >= BATCH_LIMIT) {
+                await deleteBatch.commit();
+                deleteBatch = writeBatch(db);
+                deleteCount = 0;
+              }
+            }
+
+            // Commit any remaining deletes
+            if (deleteCount > 0) {
+              await deleteBatch.commit();
+            }
           }
 
           // Save to Firestore using batch writes
           // Split into chunks to avoid Firestore's 500 operation limit
-          const BATCH_LIMIT = 500;
           let batch = writeBatch(db);
           let operationCount = 0;
 
