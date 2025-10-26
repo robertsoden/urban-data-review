@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Card, { CardHeader } from '../components/Card';
+import { Card, CardHeader } from '../components/Card';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, Priority } from '../types';
-import Card from '../components/Card';
+import { Card } from '../components/Card';
 import { CheckIcon, XIcon } from '../components/Icons';
 
 interface ProgressReportProps {

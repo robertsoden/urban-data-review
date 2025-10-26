@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, Category } from '../types';
-import Card, { CardHeader } from '../components/Card';
+import { Card, CardHeader } from '../components/Card';
 
 interface ManageCategoriesProps {
   navigate: (page: Page) => void;

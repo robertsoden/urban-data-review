@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, CompletionStatus } from '../types';
-import Card from '../components/Card';
+import { Card } from '../components/Card';
 import { CompletionStatusBadge, PriorityBadge } from '../components/Badge';
 
 interface DataTypesListProps {
