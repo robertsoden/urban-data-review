@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, Priority, CompletionStatus, RdlsStatus } from '../types';
-import { Card } from '../components/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 
 interface DataTypeFormProps {
   navigate: (page: Page) => void;
@@ -93,100 +93,127 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
 
   const FormRow: React.FC<{children: React.ReactNode, required?: boolean, label: string, htmlFor: string}> = ({children, required, label, htmlFor}) => (
       <div>
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-700">
-            {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={htmlFor} className="block text-sm font-medium text-neutral-700 mb-1">
+            {label} {required && <span className="text-red-600">*</span>}
         </label>
-        <div className="mt-1">{children}</div>
+        {children}
       </div>
   );
+
+  const inputClasses = "block w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
 
   const backLink = isEditMode && id ? { name: 'data-type-detail', id: id } as Page : { name: 'data-types' } as Page;
 
   return (
-    <div>
-      <button onClick={() => navigate(backLink)} className="mb-4 text-button-blue hover:underline">
-          &larr; Cancel and Back
+    <div className="space-y-6">
+      <button
+        onClick={() => navigate(backLink)}
+        className="text-primary-600 hover:text-primary-700 font-medium hover:underline"
+      >
+        &larr; Cancel and Back
       </button>
+
       <Card>
-        <h1 className="text-2xl font-bold text-slate-800 mb-4">{isEditMode ? 'Edit Data Type' : 'Add New Data Type'}</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <CardHeader>
+          <CardTitle>{isEditMode ? 'Edit Data Type' : 'Add New Data Type'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormRow label="Name" htmlFor="name" required>
-                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-            </FormRow>
-            <FormRow label="UID" htmlFor="uid" required>
-                <input type="text" id="uid" name="uid" value={formData.uid} onChange={handleChange} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="e.g., INF-001" />
-            </FormRow>
-             <FormRow label="Category" htmlFor="category">
-                <select id="category" name="category" value={formData.category} onChange={handleChange} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                  {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                </select>
-            </FormRow>
-             <div className="md:col-span-3">
-                <FormRow label="Description" htmlFor="description">
-                    <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={3} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-                </FormRow>
-            </div>
-            <FormRow label="Priority" htmlFor="priority">
-                <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-            </FormRow>
-             <FormRow label="Completion Status" htmlFor="completion_status">
-                <select id="completion_status" name="completion_status" value={formData.completion_status} onChange={handleChange} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-            </FormRow>
-            <div className="md:col-span-3">
-                <FormRow label="Key Attributes (JSON Array)" htmlFor="key_attributes">
-                    <textarea id="key_attributes" name="key_attributes" value={formData.key_attributes} onChange={handleChange} rows={3} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md font-mono" />
-                </FormRow>
-            </div>
-             <div className="md:col-span-3">
-                <FormRow label="Notes" htmlFor="notes">
-                    <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-                </FormRow>
-            </div>
-          </div>
-          
-           <div>
-              <label className="block text-sm font-medium text-gray-700">Link to Datasets</label>
-              <div className="mt-2 border border-gray-200 rounded-md max-h-60 overflow-y-auto">
-                <div className="divide-y divide-gray-200">
-                    {datasets.map(ds => (
-                        <div key={ds.id} className="relative flex items-start p-4">
-                            <div className="min-w-0 flex-1 text-sm">
-                                <label htmlFor={`link-${ds.id}`} className="font-medium text-gray-700 select-none">{ds.name}</label>
-                            </div>
-                            <div className="ml-3 flex items-center h-5">
-                                <input id={`link-${ds.id}`} type="checkbox" checked={linkedDatasetIds.has(ds.id)} onChange={() => handleLinkChange(ds.id)} className="focus:ring-button-blue h-4 w-4 text-button-blue border-gray-300 rounded" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormRow label="Name" htmlFor="name" required>
+                  <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={inputClasses} />
+              </FormRow>
+              <FormRow label="UID" htmlFor="uid" required>
+                  <input type="text" id="uid" name="uid" value={formData.uid} onChange={handleChange} className={inputClasses} placeholder="e.g., INF-001" />
+              </FormRow>
+               <FormRow label="Category" htmlFor="category">
+                  <select id="category" name="category" value={formData.category} onChange={handleChange} className={inputClasses}>
+                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                  </select>
+              </FormRow>
+               <div className="md:col-span-3">
+                  <FormRow label="Description" htmlFor="description">
+                      <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={3} className={inputClasses} />
+                  </FormRow>
               </div>
-          </div>
+              <FormRow label="Priority" htmlFor="priority">
+                  <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className={inputClasses}>
+                      {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+              </FormRow>
+               <FormRow label="Completion Status" htmlFor="completion_status">
+                  <select id="completion_status" name="completion_status" value={formData.completion_status} onChange={handleChange} className={inputClasses}>
+                      {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+              </FormRow>
+              <div className="md:col-span-3">
+                  <FormRow label="Key Attributes (JSON Array)" htmlFor="key_attributes">
+                      <textarea id="key_attributes" name="key_attributes" value={formData.key_attributes} onChange={handleChange} rows={3} className={`${inputClasses} font-mono`} />
+                  </FormRow>
+              </div>
+               <div className="md:col-span-3">
+                  <FormRow label="Notes" htmlFor="notes">
+                      <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className={inputClasses} />
+                  </FormRow>
+              </div>
+            </div>
 
-          <div className="pt-5 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-                 <div>
-                    {isEditMode && (
-                        <button
-                            type="button"
-                            onClick={handleDelete}
-                            className="bg-red-600 text-white py-2 px-4 rounded-md shadow-sm text-sm font-medium hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                            Delete Data Type
-                        </button>
-                    )}
-                </div>
-                <div className="flex justify-end gap-4">
-                  <button type="button" onClick={() => navigate(backLink)} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                  <button type="submit" className="bg-button-blue text-white py-2 px-4 rounded-md shadow-sm text-sm font-medium hover:bg-blue-600">{isEditMode ? 'Save Changes' : 'Save Data Type'}</button>
+             <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Link to Datasets</label>
+                <div className="border border-neutral-300 rounded-lg max-h-60 overflow-y-auto">
+                  <div className="divide-y divide-neutral-200">
+                      {datasets.map(ds => (
+                          <div key={ds.id} className="relative flex items-start p-4 hover:bg-neutral-50 transition-colors">
+                              <div className="min-w-0 flex-1 text-sm">
+                                  <label htmlFor={`link-${ds.id}`} className="font-medium text-neutral-700 select-none cursor-pointer">{ds.name}</label>
+                              </div>
+                              <div className="ml-3 flex items-center h-5">
+                                  <input
+                                    id={`link-${ds.id}`}
+                                    type="checkbox"
+                                    checked={linkedDatasetIds.has(ds.id)}
+                                    onChange={() => handleLinkChange(ds.id)}
+                                    className="h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-2 focus:ring-primary-500"
+                                  />
+                              </div>
+                          </div>
+                      ))}
+                  </div>
                 </div>
             </div>
-          </div>
-        </form>
+
+            <div className="pt-6 border-t border-neutral-200">
+              <div className="flex justify-between items-center">
+                   <div>
+                      {isEditMode && (
+                          <button
+                              type="button"
+                              onClick={handleDelete}
+                              className="bg-red-600 text-white py-2 px-4 rounded-lg shadow-sm font-medium hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                              Delete Data Type
+                          </button>
+                      )}
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate(backLink)}
+                      className="bg-white py-2 px-4 border border-neutral-300 rounded-lg shadow-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-primary-600 text-white py-2 px-4 rounded-lg shadow-sm font-medium hover:bg-primary-700 transition-colors"
+                    >
+                      {isEditMode ? 'Save Changes' : 'Save Data Type'}
+                    </button>
+                  </div>
+              </div>
+            </div>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );
