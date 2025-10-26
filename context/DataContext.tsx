@@ -160,12 +160,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = JSON.parse(content);
 
           // Validate the imported data structure
-          if (!data.dataTypes || !data.datasets || !data.categories) {
-            throw new Error('Invalid data format: missing required fields');
+          const missingFields: string[] = [];
+          if (!data.dataTypes) missingFields.push('dataTypes');
+          if (!data.datasets) missingFields.push('datasets');
+          if (!data.categories) missingFields.push('categories');
+
+          if (missingFields.length > 0) {
+            throw new Error(
+              `Invalid data format: missing required fields: ${missingFields.join(', ')}. ` +
+              `Expected format: { dataTypes: [], datasets: [], categories: [] }`
+            );
           }
 
-          if (!Array.isArray(data.dataTypes) || !Array.isArray(data.datasets) || !Array.isArray(data.categories)) {
-            throw new Error('Invalid data format: fields must be arrays');
+          // Validate that fields are arrays
+          const invalidFields: string[] = [];
+          if (!Array.isArray(data.dataTypes)) invalidFields.push('dataTypes');
+          if (!Array.isArray(data.datasets)) invalidFields.push('datasets');
+          if (!Array.isArray(data.categories)) invalidFields.push('categories');
+
+          if (invalidFields.length > 0) {
+            throw new Error(
+              `Invalid data format: the following fields must be arrays: ${invalidFields.join(', ')}`
+            );
           }
 
           // Set the imported data
@@ -175,7 +191,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           resolve();
         } catch (error) {
-          reject(error);
+          // Handle JSON parsing errors specifically
+          if (error instanceof SyntaxError) {
+            reject(new Error('Invalid JSON file: unable to parse file content'));
+          } else {
+            reject(error);
+          }
         }
       };
 
