@@ -34,6 +34,33 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// ===== TEMPORARY: localStorage support (remove when migrating to Firebase) =====
+const LOCALSTORAGE_KEY = 'urban-data-review-data';
+
+const saveToLocalStorage = (data: { dataTypes: DataType[], datasets: Dataset[], categories: Category[], dataTypeDatasets: DataTypeDataset[] }) => {
+  try {
+    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(data));
+    console.log('[localStorage] Data saved successfully');
+  } catch (e) {
+    console.error('[localStorage] Failed to save:', e);
+  }
+};
+
+const loadFromLocalStorage = () => {
+  try {
+    const stored = localStorage.getItem(LOCALSTORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      console.log('[localStorage] Data loaded successfully');
+      return data;
+    }
+  } catch (e) {
+    console.error('[localStorage] Failed to load:', e);
+  }
+  return null;
+};
+// ===== END TEMPORARY =====
+
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [dataTypes, setDataTypes] = useState<DataType[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -50,6 +77,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Check if Firebase is configured
         if (!db) {
+          // TEMPORARY: Try localStorage first when Firebase is not configured
+          const localData = loadFromLocalStorage();
+          if (localData) {
+            console.log('Firebase not configured, loading from localStorage');
+            setDataTypes(localData.dataTypes || []);
+            setDatasets(localData.datasets || []);
+            setCategories(localData.categories || []);
+            setDataTypeDatasets(localData.dataTypeDatasets || []);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+
           console.log('Firebase not configured, using mock data');
           setDataTypes(mockDataTypes);
           setDatasets(mockDatasets);
@@ -135,23 +175,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  // TEMPORARY: Helper to persist state changes to localStorage when Firebase is not configured
+  const persistIfNeeded = (newDataTypes: DataType[], newDatasets: Dataset[], newCategories: Category[], newDataTypeDatasets: DataTypeDataset[]) => {
+    if (!db) {
+      saveToLocalStorage({
+        dataTypes: newDataTypes,
+        datasets: newDatasets,
+        categories: newCategories,
+        dataTypeDatasets: newDataTypeDatasets
+      });
+    }
+  };
+
   const addDataType = async (dataType: Omit<DataType, 'id' | 'created_at'>) => {
     const newDataType: DataType = {
       ...dataType,
       id: new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
-    setDataTypes(prev => [...prev, newDataType]);
+    const newDataTypes = [...dataTypes, newDataType];
+    setDataTypes(newDataTypes);
+    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
     addNotification('Data type added successfully', 'success');
   };
 
   const updateDataType = async (id: string, dataType: Partial<DataType>) => {
-    setDataTypes(prev => prev.map(dt => dt.id === id ? { ...dt, ...dataType } : dt));
+    const newDataTypes = dataTypes.map(dt => dt.id === id ? { ...dt, ...dataType } : dt);
+    setDataTypes(newDataTypes);
+    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
     addNotification('Data type updated successfully', 'success');
   };
 
   const deleteDataType = async (id: string) => {
-    setDataTypes(prev => prev.filter(dt => dt.id !== id));
+    const newDataTypes = dataTypes.filter(dt => dt.id !== id);
+    setDataTypes(newDataTypes);
+    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
     addNotification('Data type deleted successfully', 'success');
   };
 
@@ -161,17 +219,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
-    setDatasets(prev => [...prev, newDataset]);
+    const newDatasets = [...datasets, newDataset];
+    setDatasets(newDatasets);
+    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
     addNotification('Dataset added successfully', 'success');
   };
 
   const updateDataset = async (id: string, dataset: Partial<Dataset>) => {
-    setDatasets(prev => prev.map(ds => ds.id === id ? { ...ds, ...dataset } : ds));
+    const newDatasets = datasets.map(ds => ds.id === id ? { ...ds, ...dataset } : ds);
+    setDatasets(newDatasets);
+    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
     addNotification('Dataset updated successfully', 'success');
   };
 
   const deleteDataset = async (id: string) => {
-    setDatasets(prev => prev.filter(ds => ds.id !== id));
+    const newDatasets = datasets.filter(ds => ds.id !== id);
+    setDatasets(newDatasets);
+    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
     addNotification('Dataset deleted successfully', 'success');
   };
 
@@ -180,17 +244,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...category,
       id: new Date().toISOString(),
     };
-    setCategories(prev => [...prev, newCategory]);
+    const newCategories = [...categories, newCategory];
+    setCategories(newCategories);
+    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
     addNotification('Category added successfully', 'success');
   };
 
   const updateCategory = async (id: string, category: Partial<Category>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...category } : c));
+    const newCategories = categories.map(c => c.id === id ? { ...c, ...category } : c);
+    setCategories(newCategories);
+    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
     addNotification('Category updated successfully', 'success');
   };
 
   const deleteCategory = async (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
+    const newCategories = categories.filter(c => c.id !== id);
+    setCategories(newCategories);
+    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
     addNotification('Category deleted successfully', 'success');
   };
 
@@ -387,7 +457,33 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
 
-          console.log('[Import] Validation complete, starting Firestore operations...');
+          console.log('[Import] Validation complete');
+
+          // TEMPORARY: If Firebase is not configured, use localStorage instead
+          if (!db) {
+            console.log('[Import] Firebase not configured, saving to localStorage...');
+
+            // Update state
+            setDataTypes(data.dataTypes);
+            setDatasets(data.datasets);
+            setCategories(categories);
+            setDataTypeDatasets(dataTypeDatasets);
+
+            // Persist to localStorage
+            saveToLocalStorage({
+              dataTypes: data.dataTypes,
+              datasets: data.datasets,
+              categories: categories,
+              dataTypeDatasets: dataTypeDatasets
+            });
+
+            console.log('[Import] Import completed successfully (localStorage)!');
+            resolve();
+            return;
+          }
+          // END TEMPORARY
+
+          console.log('[Import] Starting Firestore operations...');
 
           // Delete existing data from Firestore
           // Use smaller batch size and add delays to avoid rate limiting

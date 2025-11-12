@@ -13,10 +13,10 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
   const isEditMode = id !== undefined;
 
   const [formData, setFormData] = useState<Omit<DataType, 'id' | 'created_at'> | DataType>({
-    uid: '', name: '', category: categories[0]?.name || '', description: '',
+    name: '', category: categories[0]?.name || '', description: '',
     priority: Priority.Unassigned, completion_status: CompletionStatus.NotStarted,
     minimum_criteria: '', notes: '', key_attributes: '[]', applicable_standards: '',
-    iso_indicators: '', rdls_can_handle: RdlsStatus.Unassigned,
+    rdls_can_handle: RdlsStatus.Unassigned,
     rdls_component: '', rdls_notes: ''
   });
   const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<string>>(new Set());
@@ -51,8 +51,8 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.uid) {
-      addNotification('Name and UID are required.', 'error');
+    if (!formData.name) {
+      addNotification('Name is required.', 'error');
       return;
     }
 
@@ -121,12 +121,11 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormRow label="Name" htmlFor="name" required>
-                  <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={inputClasses} />
-              </FormRow>
-              <FormRow label="UID" htmlFor="uid" required>
-                  <input type="text" id="uid" name="uid" value={formData.uid} onChange={handleChange} className={inputClasses} placeholder="e.g., INF-001" />
-              </FormRow>
+              <div className="md:col-span-2">
+                <FormRow label="Name" htmlFor="name" required>
+                    <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={inputClasses} />
+                </FormRow>
+              </div>
                <FormRow label="Category" htmlFor="category">
                   <select id="category" name="category" value={formData.category} onChange={handleChange} className={inputClasses}>
                     {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}

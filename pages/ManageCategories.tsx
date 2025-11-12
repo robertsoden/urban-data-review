@@ -12,6 +12,8 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
 
+  const inputClasses = "block w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
+
   const handleEditClick = (category: Category) => {
     setEditingCategory(category);
     setFormData({ name: category.name, description: category.description });
@@ -94,29 +96,40 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
           <CardHeader>{editingCategory ? 'Edit Category' : 'Add New Category'}</CardHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-neutral-700">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
               <input
                 type="text"
                 id="name"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-neutral-300 rounded-lg focus:ring-primary-500"
+                className={inputClasses}
               />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-neutral-700">Description</label>
+              <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
               <textarea
                 id="description"
                 rows={3}
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-neutral-300 rounded-lg focus:ring-primary-500"
+                className={inputClasses}
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-                {editingCategory && <button type="button" onClick={handleCancel} className="bg-white py-2 px-4 border border-neutral-300 rounded-lg shadow-sm text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</button>}
-                <button type="submit" className="bg-primary-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-primary-700">
-                    {editingCategory ? 'Save Changes' : 'Add Category'}
+            <div className="flex justify-end gap-3 pt-2">
+                {editingCategory && (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="bg-white py-2 px-4 border border-neutral-300 rounded-lg shadow-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="bg-primary-600 text-white py-2 px-4 rounded-lg shadow-sm font-medium hover:bg-primary-700 transition-colors"
+                >
+                  {editingCategory ? 'Save Changes' : 'Add Category'}
                 </button>
             </div>
           </form>

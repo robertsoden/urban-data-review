@@ -95,10 +95,10 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Source Organization</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider"></th>
+                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Source Organization</th>
+                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">

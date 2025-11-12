@@ -12,7 +12,8 @@ interface DataTypesListProps {
 
 const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory, initialStatus }) => {
   const { dataTypes, categories } = useData();
-  
+  const showProgress = import.meta.env.VITE_SHOW_PROGRESS === 'true';
+
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +30,7 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
     return dataTypes.filter(dt => {
       const categoryMatch = categoryFilter === 'All' || dt.category === categoryFilter;
       const statusMatch = statusFilter === 'All' || dt.completion_status === statusFilter;
-      const searchMatch = searchTerm === '' || dt.name.toLowerCase().includes(searchTerm.toLowerCase()) || dt.uid.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchMatch = searchTerm === '' || dt.name.toLowerCase().includes(searchTerm.toLowerCase());
       return categoryMatch && statusMatch && searchMatch;
     });
   }, [dataTypes, categoryFilter, statusFilter, searchTerm]);
@@ -48,7 +49,7 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
 
       <Card>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${showProgress ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
             <div>
               <label htmlFor="category-filter" className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
               <select
@@ -61,18 +62,20 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
                 {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
-            <div>
-              <label htmlFor="status-filter" className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
-              <select
-                id="status-filter"
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
-              >
-                <option value="All">All Statuses</option>
-                {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
+            {showProgress && (
+              <div>
+                <label htmlFor="status-filter" className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+                <select
+                  id="status-filter"
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                >
+                  <option value="All">All Statuses</option>
+                  {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label htmlFor="search-filter" className="block text-sm font-medium text-neutral-700 mb-1">Search</label>
               <input
@@ -93,11 +96,10 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">UID</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Priority</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>
+                {showProgress && <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
@@ -107,16 +109,15 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
                   className="hover:bg-neutral-50 cursor-pointer transition-colors"
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
-                  <td className="px-4 py-3 font-mono text-sm text-neutral-500">{dt.uid}</td>
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
                   <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
                   <td className="px-4 py-3"><PriorityBadge priority={dt.priority} /></td>
-                  <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>
+                  {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
                 </tr>
               ))}
               {filteredDataTypes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-neutral-500">
+                  <td colSpan={showProgress ? 4 : 3} className="text-center py-12 text-neutral-500">
                     No data types match the current filters.
                   </td>
                 </tr>

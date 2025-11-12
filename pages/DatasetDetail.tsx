@@ -18,8 +18,8 @@ const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth
 
 const BooleanDisplay: React.FC<{ value: boolean }> = ({ value }) => (
   <div className="flex items-center gap-2">
-    {value ? <CheckIcon className="text-success" /> : <XIcon className="text-danger" />}
-    <span className="font-semibold">{value ? 'Yes' : 'No'}</span>
+    {value ? <CheckIcon className="text-success" /> : <XIcon className="text-neutral-400" />}
+    <span className="font-semibold text-neutral-700">{value ? 'Yes' : 'No'}</span>
   </div>
 );
 
@@ -108,7 +108,6 @@ const DatasetDetail: React.FC<DatasetDetailProps> = ({ navigate, id }) => {
                   <table className="w-full text-left">
                       <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
                           <tr>
-                              <th className="p-3">UID</th>
                               <th className="p-3">Name</th>
                               <th className="p-3">Category</th>
                           </tr>
@@ -116,10 +115,9 @@ const DatasetDetail: React.FC<DatasetDetailProps> = ({ navigate, id }) => {
                       <tbody className="bg-white divide-y divide-neutral-200">
                           {linkedDataTypes.map(dt => (
                               <tr key={dt.id} className="hover:bg-neutral-50">
-                                  <td className="p-3 font-mono text-sm text-neutral-500">{dt.uid}</td>
                                   <td className="p-3">
-                                      <span 
-                                          onClick={() => navigate({ name: 'data-type-detail', id: dt.id })} 
+                                      <span
+                                          onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                                           className="font-medium text-neutral-900 cursor-pointer hover:text-primary-600"
                                       >
                                           {dt.name}

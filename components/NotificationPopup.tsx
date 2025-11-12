@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { CheckCircleIcon, XIcon } from './Icons';
 
 const NotificationPopup: React.FC = () => {
-  const { notifications } = useData();
+  const { notifications, clearNotification } = useData();
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      // Auto-dismiss each notification after 3 seconds
+      notifications.forEach(notification => {
+        const timer = setTimeout(() => {
+          clearNotification(notification.id);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+      });
+    }
+  }, [notifications, clearNotification]);
 
   if (notifications.length === 0) {
     return null;

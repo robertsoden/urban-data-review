@@ -10,6 +10,7 @@ interface CategoriesProps {
 
 const Categories: React.FC<CategoriesProps> = ({ navigate }) => {
   const { categories, dataTypes } = useData();
+  const showProgress = import.meta.env.VITE_SHOW_PROGRESS === 'true';
 
   const dataTypesByCategory = categories.map(category => {
     const dts = dataTypes.filter(dt => dt.category === category.name);
@@ -47,20 +48,22 @@ const Categories: React.FC<CategoriesProps> = ({ navigate }) => {
             <CardContent className="flex flex-col h-full">
               <p className="text-neutral-600 mb-4 flex-grow">{category.description || <span className="italic">No description provided.</span>}</p>
 
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500">Complete</span>
-                  <span className="font-semibold text-success">{category.complete}</span>
+              {showProgress && (
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-500">Complete</span>
+                    <span className="font-semibold text-success">{category.complete}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-500">In Progress</span>
+                    <span className="font-semibold text-warning">{category.inProgress}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-neutral-500">Not Started</span>
+                    <span className="font-semibold text-danger">{category.notStarted}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500">In Progress</span>
-                  <span className="font-semibold text-warning">{category.inProgress}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500">Not Started</span>
-                  <span className="font-semibold text-danger">{category.notStarted}</span>
-                </div>
-              </div>
+              )}
 
               <button
                   onClick={() => navigate({ name: 'data-types', initialCategory: category.name })}

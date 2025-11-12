@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useData } from './context/DataContext';
 import { Page } from './types';
 import Header from './components/Header';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import DataTypesList from './pages/DataTypesList';
 import DataTypeDetail from './pages/DataTypeDetail';
@@ -16,20 +17,20 @@ import ImportExport from './pages/ImportExport';
 import NotificationPopup from './components/NotificationPopup';
 
 const App: React.FC = () => {
-  const [page, setPage] = useState<Page>({ name: 'dashboard' });
+  const [page, setPage] = useState<Page>({ name: 'home' });
 
   const navigate = (newPage: Page) => {
     setPage(newPage);
     window.scrollTo(0, 0);
   };
-  
+
   const renderPage = () => {
     switch (page.name) {
-      case 'dashboard':
-        return <Dashboard navigate={navigate} />;
+      case 'home':
+        return <Home navigate={navigate} />;
       case 'data-types':
-        return <DataTypesList 
-                  navigate={navigate} 
+        return <DataTypesList
+                  navigate={navigate}
                   initialCategory={'initialCategory' in page ? page.initialCategory : undefined}
                   initialStatus={'initialStatus' in page ? page.initialStatus : undefined}
                 />;
@@ -56,7 +57,7 @@ const App: React.FC = () => {
       case 'import-export':
         return <ImportExport navigate={navigate} />;
       default:
-        return <Dashboard navigate={navigate} />;
+        return <Home navigate={navigate} />;
     }
   };
 

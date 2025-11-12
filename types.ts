@@ -1,4 +1,5 @@
 export type Page =
+  | { name: 'home' }
   | { name: 'dashboard' }
   | { name: 'data-types', initialCategory?: string, initialStatus?: CompletionStatus }
   | { name: 'data-type-detail', id: string }
@@ -42,7 +43,6 @@ export interface Category {
 
 export interface DataType {
   id: string;
-  uid: string;
   name: string;
   category: string;
   description: string;
@@ -52,7 +52,6 @@ export interface DataType {
   notes: string;
   key_attributes: string; // JSON string
   applicable_standards: string;
-  iso_indicators: string;
   rdls_can_handle: RdlsStatus;
   rdls_component: string;
   rdls_notes: string;

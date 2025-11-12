@@ -6,22 +6,23 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ navigate }) => {
+  const showProgress = import.meta.env.VITE_SHOW_PROGRESS === 'true';
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <div 
+          <div
             className="text-xl font-bold text-primary-600 cursor-pointer"
-            onClick={() => navigate({ name: 'dashboard' })}
+            onClick={() => navigate({ name: 'home' })}
           >
             Urban Data Review
           </div>
           <nav className="hidden md:flex gap-4">
-            <NavItem onClick={() => navigate({ name: 'dashboard' })}>Dashboard</NavItem>
-            <NavItem onClick={() => navigate({ name: 'datasets' })}>Datasets</NavItem>
             <NavItem onClick={() => navigate({ name: 'data-types' })}>Data Types</NavItem>
+            <NavItem onClick={() => navigate({ name: 'datasets' })}>Datasets</NavItem>
             <NavItem onClick={() => navigate({ name: 'categories' })}>Categories</NavItem>
-            <NavItem onClick={() => navigate({ name: 'progress-report' })}>Progress</NavItem>
+            {showProgress && <NavItem onClick={() => navigate({ name: 'progress-report' })}>Progress</NavItem>}
             <NavItem onClick={() => navigate({ name: 'import-export' })}>Import/Export</NavItem>
           </nav>
         </div>

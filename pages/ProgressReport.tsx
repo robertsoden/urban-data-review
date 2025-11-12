@@ -41,7 +41,6 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
               <th className="p-3 text-center">Has Example Dataset?</th>
               <th className="p-3 text-center">Has Key Attributes?</th>
               <th className="p-3 text-center">Has Standards?</th>
-              <th className="p-3 text-center">Has ISO Indicators?</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-neutral-200">
@@ -61,9 +60,6 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
                 </td>
                 <td className="p-3">
                   <Checkmark condition={!!dt.applicable_standards && dt.applicable_standards.trim() !== ''} />
-                </td>
-                <td className="p-3">
-                  <Checkmark condition={!!dt.iso_indicators && dt.iso_indicators.trim() !== ''} />
                 </td>
               </tr>
             ))}
