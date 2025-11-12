@@ -392,9 +392,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
-            'id', 'uid', 'name', 'category', 'description', 'priority',
+            'id', 'name', 'category', 'description', 'priority',
             'completion_status', 'minimum_criteria', 'notes', 'key_attributes',
-            'applicable_standards', 'iso_indicators', 'rdls_can_handle',
+            'applicable_standards', 'rdls_can_handle',
             'rdls_component', 'rdls_notes', 'created_at'
           ];
 
