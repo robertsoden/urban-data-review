@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Page, DataType, CompletionStatus } from '../types';
 import { Card, CardContent } from '../components/Card';
-import { CompletionStatusBadge, PriorityBadge } from '../components/Badge';
+import { CompletionStatusBadge, RdlsStatusBadge } from '../components/Badge';
 
 interface DataTypesListProps {
   navigate: (page: Page) => void;
@@ -98,7 +98,7 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Can be handled by RDLS?</th>
                 {showProgress && <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>}
               </tr>
             </thead>
@@ -111,7 +111,7 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialCategory
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
                   <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
-                  <td className="px-4 py-3"><PriorityBadge priority={dt.priority} /></td>
+                  <td className="px-4 py-3"><RdlsStatusBadge status={dt.rdls_can_handle} /></td>
                   {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
                 </tr>
               ))}
