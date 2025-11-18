@@ -93,6 +93,8 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
                 {renderJsonAttributes(dataType.key_attributes)}
             </DetailItem>
             <DetailItem label="Applicable Standards">{dataType.applicable_standards}</DetailItem>
+            <DetailItem label="ISO Sector">{dataType.iso_sector}</DetailItem>
+            <DetailItem label="INSPIRE Specification" fullWidth>{dataType.inspire_spec}</DetailItem>
           </div>
         </CardContent>
       </Card>
@@ -103,6 +105,8 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
             <DetailItem label="Can be handled by RDLS?"><RdlsStatusBadge status={dataType.rdls_can_handle} /></DetailItem>
             <DetailItem label="RDLS Component">{dataType.rdls_component}</DetailItem>
+            <DetailItem label="RDLS Coverage">{dataType.rdls_coverage}</DetailItem>
+            <DetailItem label="RDLS Extension Module">{dataType.rdls_extension_module}</DetailItem>
             <DetailItem label="RDLS Notes" fullWidth>{dataType.rdls_notes}</DetailItem>
           </div>
         </CardContent>

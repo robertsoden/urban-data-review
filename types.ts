@@ -35,6 +35,13 @@ export enum RdlsStatus {
   Unassigned = 'Unassigned',
 }
 
+export enum RdlsCoverage {
+  ExtensionNeeded = 'Extension Needed',
+  Handles = 'Handles',
+  Partial = 'Partial',
+  Unassigned = 'Unassigned',
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -56,6 +63,11 @@ export interface DataType {
   rdls_component: string;
   rdls_notes: string;
   created_at: string;
+  // New fields added 2025-11-18
+  iso_sector: string;
+  inspire_spec: string;
+  rdls_coverage: RdlsCoverage;
+  rdls_extension_module: string;
 }
 
 export interface Dataset {
