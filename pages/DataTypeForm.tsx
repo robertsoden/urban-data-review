@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { Page, DataType, Priority, CompletionStatus, RdlsStatus } from '../types';
+import { Page, DataType, Priority, CompletionStatus, RdlsStatus, RdlsCoverage } from '../types';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 
 interface DataTypeFormProps {
@@ -17,7 +17,8 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     priority: Priority.Unassigned, completion_status: CompletionStatus.NotStarted,
     minimum_criteria: '', notes: '', key_attributes: '[]', applicable_standards: '',
     rdls_can_handle: RdlsStatus.Unassigned,
-    rdls_component: '', rdls_notes: ''
+    rdls_component: '', rdls_notes: '',
+    iso_sector: '', inspire_spec: '', rdls_coverage: RdlsCoverage.Unassigned, rdls_extension_module: ''
   });
   const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<string>>(new Set());
 
@@ -155,6 +156,27 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
                   <FormRow label="Notes" htmlFor="notes">
                       <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className={inputClasses} />
                   </FormRow>
+              </div>
+            </div>
+
+            {/* New fields section - Standards & RDLS */}
+            <div className="pt-6 border-t border-neutral-200">
+              <h3 className="text-lg font-medium text-neutral-900 mb-4">Standards & RDLS Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormRow label="ISO Sector" htmlFor="iso_sector">
+                    <input type="text" id="iso_sector" name="iso_sector" value={formData.iso_sector} onChange={handleChange} className={inputClasses} />
+                </FormRow>
+                <FormRow label="INSPIRE Specification" htmlFor="inspire_spec">
+                    <input type="text" id="inspire_spec" name="inspire_spec" value={formData.inspire_spec} onChange={handleChange} className={inputClasses} />
+                </FormRow>
+                <FormRow label="RDLS Coverage" htmlFor="rdls_coverage">
+                    <select id="rdls_coverage" name="rdls_coverage" value={formData.rdls_coverage} onChange={handleChange} className={inputClasses}>
+                        {Object.values(RdlsCoverage).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                </FormRow>
+                <FormRow label="RDLS Extension Module" htmlFor="rdls_extension_module">
+                    <input type="text" id="rdls_extension_module" name="rdls_extension_module" value={formData.rdls_extension_module} onChange={handleChange} className={inputClasses} />
+                </FormRow>
               </div>
             </div>
 
