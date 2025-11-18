@@ -637,7 +637,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           for (const collectionName of collectionsToDelete) {
             const snapshot = await getDocs(collection(db, collectionName));
             const totalDocs = snapshot.docs.length;
-            console.log(`[Import] Deleting ${totalDocs} documents from ${collectionName}...`);
+            console.log(`[Import] Found ${totalDocs} documents in ${collectionName} to delete...`);
+
+            // Extra logging for categories to debug the issue
+            if (collectionName === 'categories' && totalDocs > 0) {
+              console.log(`[Import] Categories to be deleted:`, snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            }
 
             let deleteBatch = writeBatch(db);
             let deleteCount = 0;
@@ -715,6 +720,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Save categories
           console.log(`[Import] Saving ${categories.length} categories...`);
+          console.log(`[Import] Categories being saved:`, categories.map(c => ({ id: c.id, name: c.name })));
           for (const item of categories) {
             await commitBatchIfNeeded();
             const docRef = doc(db, 'categories', String(item.id));
@@ -723,7 +729,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] Categories saved');
+          console.log('[Import] Categories saved to Firestore');
+
+          // Verify what was actually saved
+          const verifySnapshot = await getDocs(collection(db, 'categories'));
+          console.log(`[Import] Verification: ${verifySnapshot.size} categories now in Firestore:`,
+            verifySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
 
           // Save dataTypeDatasets
           console.log(`[Import] Saving ${dataTypeDatasets.length} dataTypeDatasets...`);
