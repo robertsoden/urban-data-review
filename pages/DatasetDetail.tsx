@@ -18,7 +18,7 @@ const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth
 
 const BooleanDisplay: React.FC<{ value: boolean }> = ({ value }) => (
   <div className="flex items-center gap-2">
-    {value ? <CheckIcon className="text-success" /> : <XIcon className="text-neutral-400" />}
+    {value && <CheckIcon className="text-success" />}
     <span className="font-semibold text-neutral-700">{value ? 'Yes' : 'No'}</span>
   </div>
 );

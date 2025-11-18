@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
 import { DocumentTextIcon, DatabaseIcon, CollectionIcon } from '../components/Icons';
-import { CompletionStatusBadge, PriorityBadge } from '../components/Badge';
+import { CompletionStatusBadge, RdlsStatusBadge } from '../components/Badge';
 
 interface HomeProps {
   navigate: (page: Page) => void;
@@ -59,7 +59,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDL Ready</th>
                 {showProgress && <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>}
               </tr>
             </thead>
@@ -72,7 +72,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
                   <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
-                  <td className="px-4 py-3"><PriorityBadge priority={dt.priority} /></td>
+                  <td className="px-4 py-3"><RdlsStatusBadge status={dt.rdls_can_handle} /></td>
                   {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
                 </tr>
               ))}

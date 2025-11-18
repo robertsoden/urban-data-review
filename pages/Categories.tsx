@@ -41,7 +41,12 @@ const Categories: React.FC<CategoriesProps> = ({ navigate }) => {
           <Card key={category.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{category.name}</span>
+                <span 
+                    className="cursor-pointer hover:text-primary-600 transition-colors"
+                    onClick={() => navigate({ name: 'data-types', initialCategory: category.name })}
+                >
+                    {category.name}
+                </span>
                 <span className="text-sm font-medium bg-primary-100 text-primary-800 px-2 py-1 rounded-full">{category.total}</span>
               </CardTitle>
             </CardHeader>
