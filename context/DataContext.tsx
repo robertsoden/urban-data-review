@@ -25,6 +25,7 @@ interface DataContextType {
   clearNotification: (id: number) => void;
   exportData: () => void;
   importData: (file: File) => Promise<void>;
+  regenerateCategoriesFromDataTypes: () => Promise<void>;
   getDataTypeById: (id: string) => DataType | undefined;
   getDatasetById: (id: string) => Dataset | undefined;
   getDatasetsForDataType: (dataTypeId: string) => Dataset[];
@@ -519,6 +520,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
 
+          console.log(`[Import] Unique category names extracted from DataTypes:`, Array.from(uniqueCategoryNames).sort());
+
           // Create category objects from unique names
           const categories: Category[] = Array.from(uniqueCategoryNames).map((name, index) => ({
             id: `cat-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
@@ -526,6 +529,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             description: `Category for ${name} data types`
           }));
 
+          console.log(`[Import] Generated categories:`, categories.map(c => ({ id: c.id, name: c.name })));
           console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${categories.length} categories (generated from DataTypes), ${dataTypeDatasets.length} dataTypeDatasets`);
 
           // Validate individual DataType items
@@ -763,6 +767,71 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  // Diagnostic function to help debug category issues
+  const regenerateCategoriesFromDataTypes = async () => {
+    console.log('[RegenerateCategories] Starting category regeneration from current DataTypes...');
+
+    // Extract unique category names from current DataTypes
+    const categoryMap = new Map<string, number>();
+    dataTypes.forEach(dt => {
+      if (dt.category && typeof dt.category === 'string' && dt.category.trim()) {
+        const categoryName = dt.category.trim();
+        categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1);
+      }
+    });
+
+    console.log('[RegenerateCategories] Category breakdown:');
+    const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    sortedCategories.forEach(([name, count]) => {
+      console.log(`  - ${name}: ${count} data types`);
+    });
+
+    console.log(`[RegenerateCategories] Total unique categories: ${categoryMap.size}`);
+
+    // Generate new category objects
+    const newCategories: Category[] = Array.from(categoryMap.keys()).map((name, index) => ({
+      id: `cat-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
+      name: name,
+      description: `Category for ${name} data types`
+    }));
+
+    console.log('[RegenerateCategories] Generated categories:', newCategories.map(c => ({ id: c.id, name: c.name })));
+
+    // Save to Firestore if configured
+    if (db) {
+      console.log('[RegenerateCategories] Deleting old categories from Firestore...');
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      const deleteBatch = writeBatch(db);
+      categoriesSnapshot.docs.forEach(doc => {
+        deleteBatch.delete(doc.ref);
+      });
+      await deleteBatch.commit();
+      console.log(`[RegenerateCategories] Deleted ${categoriesSnapshot.size} old categories`);
+
+      console.log('[RegenerateCategories] Saving new categories to Firestore...');
+      const saveBatch = writeBatch(db);
+      newCategories.forEach(category => {
+        const docRef = doc(db, 'categories', String(category.id));
+        saveBatch.set(docRef, category);
+      });
+      await saveBatch.commit();
+      console.log(`[RegenerateCategories] Saved ${newCategories.length} new categories`);
+    } else {
+      console.log('[RegenerateCategories] Firebase not configured, saving to localStorage...');
+      saveToLocalStorage({
+        dataTypes,
+        datasets,
+        categories: newCategories,
+        dataTypeDatasets
+      });
+    }
+
+    // Update state
+    setCategories(newCategories);
+    addNotification(`Categories regenerated: ${newCategories.length} categories created from DataTypes`, 'success');
+    console.log('[RegenerateCategories] Complete!');
+  };
+
   return (
     <DataContext.Provider value={{
       dataTypes,
@@ -785,6 +854,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearNotification,
       exportData,
       importData,
+      regenerateCategoriesFromDataTypes,
       getDataTypeById,
       getDatasetById,
       getDatasetsForDataType,
