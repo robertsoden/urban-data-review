@@ -8,7 +8,7 @@ interface ManageCategoriesProps {
 }
 
 const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
-  const { categories, addCategory, updateCategory, deleteCategory, addNotification } = useData();
+  const { categories, dataTypes, addCategory, updateCategory, deleteCategory, addNotification } = useData();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
 
@@ -25,34 +25,55 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
   };
 
   const handleDelete = async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this category? Any data types in it will be moved to "Uncategorized".')) {
+      const category = categories.find(c => c.id === id);
+      if (!category) return;
+
+      // Count affected data types
+      const affectedCount = dataTypes.filter(dt => dt.category === category.name).length;
+
+      const message = affectedCount > 0
+        ? `Are you sure you want to delete "${category.name}"?\n\n${affectedCount} data type(s) will be moved to "Uncategorized".`
+        : `Are you sure you want to delete "${category.name}"?`;
+
+      if (window.confirm(message)) {
         try {
             await deleteCategory(id);
-            addNotification("Category deleted.", "success");
         } catch(e) {
-            addNotification("Failed to delete category.", "error");
+            const errorMessage = e instanceof Error ? e.message : "Failed to delete category.";
+            addNotification(errorMessage, "error");
         }
       }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) {
+    if (!formData.name || !formData.name.trim()) {
         addNotification("Category name is required.", "error");
         return;
     }
 
     try {
         if (editingCategory) {
+          // Count data types that will be affected by name change
+          const isNameChanged = formData.name.trim() !== editingCategory.name;
+          if (isNameChanged) {
+            const affectedCount = dataTypes.filter(dt => dt.category === editingCategory.name).length;
+            if (affectedCount > 0) {
+              const confirmed = window.confirm(
+                `Renaming this category will update ${affectedCount} data type(s).\n\nContinue?`
+              );
+              if (!confirmed) return;
+            }
+          }
+
           await updateCategory(editingCategory.id, formData);
-          addNotification("Category updated successfully.", "success");
         } else {
           await addCategory(formData);
-          addNotification("Category added successfully.", "success");
         }
         handleCancel();
     } catch(e) {
-        addNotification("Failed to save category.", "error");
+        const errorMessage = e instanceof Error ? e.message : "Failed to save category.";
+        addNotification(errorMessage, "error");
     }
   };
 

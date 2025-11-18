@@ -51,42 +51,42 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) {
+    if (!formData.name || !formData.name.trim()) {
       addNotification('Name is required.', 'error');
       return;
     }
 
     try {
         if (isEditMode) {
-            await updateDataType({
-                dataType: formData as DataType,
-                linkedDatasetIds: Array.from(linkedDatasetIds) as any, // Cast for simplicity
-            });
-            addNotification('Data Type updated successfully!', 'success');
+            await updateDataType(id, formData as DataType, Array.from(linkedDatasetIds));
             navigate({ name: 'data-type-detail', id });
         } else {
-            await addDataType({
-                dataType: formData,
-                linkedDatasetIds: Array.from(linkedDatasetIds) as any, // Cast for simplicity
-            });
-            addNotification('Data Type added successfully!', 'success');
+            await addDataType(formData, Array.from(linkedDatasetIds));
             navigate({ name: 'data-types' });
         }
     } catch (error) {
         console.error("Failed to save data type:", error);
-        addNotification('Failed to save data type.', 'error');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save data type.';
+        addNotification(errorMessage, 'error');
     }
   };
   
   const handleDelete = async () => {
-    if (isEditMode && formData && window.confirm(`Are you sure you want to delete the data type "${formData.name}"? This action cannot be undone.`)) {
+    if (!isEditMode || !formData) return;
+
+    const linkedDatasetsCount = linkedDatasetIds.size;
+    const message = linkedDatasetsCount > 0
+      ? `Are you sure you want to delete "${formData.name}"?\n\n${linkedDatasetsCount} dataset link(s) will also be removed.\n\nThis action cannot be undone.`
+      : `Are you sure you want to delete "${formData.name}"?\n\nThis action cannot be undone.`;
+
+    if (window.confirm(message)) {
         try {
             await deleteDataType(id);
-            addNotification('Data Type deleted successfully!', 'success');
             navigate({ name: 'data-types' });
         } catch (error) {
             console.error("Failed to delete data type:", error);
-            addNotification('Failed to delete data type.', 'error');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to delete data type.';
+            addNotification(errorMessage, 'error');
         }
     }
   }
