@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
+import { RdlsStatusBadge } from '../components/Badge';
 
 interface DatasetsListProps {
   navigate: (page: Page) => void;
@@ -98,43 +99,59 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
                 <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Source Organization</th>
                 <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Can be handled by RDLS?</th>
                 <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {filteredDatasets.map(ds => (
-                <tr key={ds.id} className="hover:bg-neutral-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-neutral-900">
-                    <span
-                      onClick={() => navigate({ name: 'dataset-detail', id: ds.id })}
-                      className="text-primary-600 hover:text-primary-700 cursor-pointer font-semibold"
-                    >
-                      {ds.name}
-                    </span>
-                    {ds.is_primary_example && (
-                      <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Primary Example</span>
-                    )}
-                    {ds.is_validated && (
-                      <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Validated</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600">{ds.source_organization}</td>
-                  <td className="px-4 py-3 text-neutral-600">{ds.source_type}</td>
-                  <td className="px-4 py-3 text-right">
-                    <a
-                      href={ds.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-600 hover:text-primary-700 hover:underline font-semibold whitespace-nowrap"
-                    >
-                      View Source &rarr;
-                    </a>
-                  </td>
-                </tr>
-              ))}
+              {filteredDatasets.map(ds => {
+                const linkedDataTypes = getDataTypesForDataset(ds.id);
+                const uniqueRdlsStatuses = [...new Set(linkedDataTypes.map(dt => dt.rdls_can_handle))];
+
+                return (
+                  <tr key={ds.id} className="hover:bg-neutral-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-neutral-900">
+                      <span
+                        onClick={() => navigate({ name: 'dataset-detail', id: ds.id })}
+                        className="text-primary-600 hover:text-primary-700 cursor-pointer font-semibold"
+                      >
+                        {ds.name}
+                      </span>
+                      {ds.is_primary_example && (
+                        <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Primary Example</span>
+                      )}
+                      {ds.is_validated && (
+                        <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Validated</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">{ds.source_organization}</td>
+                    <td className="px-4 py-3 text-neutral-600">{ds.source_type}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {uniqueRdlsStatuses.map(status => (
+                          <RdlsStatusBadge key={status} status={status} />
+                        ))}
+                        {uniqueRdlsStatuses.length === 0 && (
+                          <span className="text-neutral-400 text-sm italic">No data types</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <a
+                        href={ds.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 hover:underline font-semibold whitespace-nowrap"
+                      >
+                        View Source &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredDatasets.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-neutral-500">
+                  <td colSpan={5} className="text-center py-12 text-neutral-500">
                     No datasets match the current filters.
                   </td>
                 </tr>
