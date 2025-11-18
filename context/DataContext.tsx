@@ -549,7 +549,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'id', 'name', 'category', 'description', 'priority',
             'completion_status', 'minimum_criteria', 'notes', 'key_attributes',
             'applicable_standards', 'rdls_can_handle',
-            'rdls_component', 'rdls_notes', 'created_at'
+            'rdls_component', 'rdls_notes', 'created_at',
+            'iso_sector', 'inspire_spec', 'rdls_coverage', 'rdls_extension_module'
           ];
 
           data.dataTypes.forEach((item: any, index: number) => {

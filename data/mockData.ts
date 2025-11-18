@@ -1,9 +1,8 @@
-import { DataType, Dataset, Category, Priority, CompletionStatus, RdlsStatus } from '../types';
+import { DataType, Dataset, Category, Priority, CompletionStatus, RdlsStatus, RdlsCoverage } from '../types';
 
 export const mockDataTypes: DataType[] = [
   {
     id: '1',
-    uid: 'DT001',
     name: 'Core Business Subscribers',
     category: 'Business',
     description: 'A dataset of core business subscribers with detailed information.',
@@ -13,15 +12,17 @@ export const mockDataTypes: DataType[] = [
     notes: 'Primary dataset for business operations',
     key_attributes: '["name", "email", "phone", "subscription_type"]',
     applicable_standards: 'ISO 9001',
-    iso_indicators: 'Quality management standards',
     rdls_can_handle: RdlsStatus.Yes,
     rdls_component: 'Subscriber Management',
     rdls_notes: 'Fully integrated with RDLS',
     created_at: new Date().toISOString(),
+    iso_sector: 'Business',
+    inspire_spec: 'INSPIRE Business Standards',
+    rdls_coverage: RdlsCoverage.Handles,
+    rdls_extension_module: 'Business-Services',
   },
   {
     id: '2',
-    uid: 'DT002',
     name: 'Customer Feedback',
     category: 'Customer',
     description: 'Collection of customer feedback and survey responses.',
@@ -31,11 +32,14 @@ export const mockDataTypes: DataType[] = [
     notes: 'Used for improving customer experience',
     key_attributes: '["feedback_text", "rating", "category", "timestamp"]',
     applicable_standards: 'Customer satisfaction metrics',
-    iso_indicators: 'Customer experience standards',
     rdls_can_handle: RdlsStatus.Partial,
     rdls_component: 'Feedback System',
     rdls_notes: 'Partial integration pending',
     created_at: new Date().toISOString(),
+    iso_sector: 'Customer Services',
+    inspire_spec: 'Customer Service Standards',
+    rdls_coverage: RdlsCoverage.Partial,
+    rdls_extension_module: 'Urban-Context',
   },
 ];
 
