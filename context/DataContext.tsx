@@ -511,10 +511,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Set defaults for optional fields
           const dataTypeDatasets = data.dataTypeDatasets || [];
 
-          // Use categories from import file (no auto-generation)
-          const categories = data.categories || [];
+          // Generate categories from unique DataType.category values (ignore categories array in file)
+          const uniqueCategoryNames = new Set<string>();
+          data.dataTypes.forEach((dt: any) => {
+            if (dt.category && typeof dt.category === 'string' && dt.category.trim()) {
+              uniqueCategoryNames.add(dt.category.trim());
+            }
+          });
 
-          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${categories.length} categories, ${dataTypeDatasets.length} dataTypeDatasets`);
+          // Create category objects from unique names
+          const categories: Category[] = Array.from(uniqueCategoryNames).map((name, index) => ({
+            id: `cat-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
+            name: name,
+            description: `Category for ${name} data types`
+          }));
+
+          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${categories.length} categories (generated from DataTypes), ${dataTypeDatasets.length} dataTypeDatasets`);
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
