@@ -45,7 +45,7 @@ const Categories: React.FC<CategoriesProps> = ({ navigate }) => {
                 <span className="text-sm font-medium bg-primary-100 text-primary-800 px-2 py-1 rounded-full">{category.total}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col h-full">
+            <CardContent className="flex flex-col">
               <p className="text-neutral-600 mb-4 flex-grow">{category.description || <span className="italic">No description provided.</span>}</p>
 
               {showProgress && (
