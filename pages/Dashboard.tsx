@@ -43,7 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate }) => {
           <StatCard title="Total Data Types" value={dataTypes.length} icon={<DocumentTextIcon className="w-6 h-6" />} onClick={() => navigate({name: 'data-types'})} />
           <StatCard title="Total Datasets" value={datasets.length} icon={<DatabaseIcon className="w-6 h-6" />} onClick={() => navigate({name: 'datasets'})} />
           <StatCard title="Total Categories" value={categories.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'categories'})} />
-          <StatCard title="Essential Data Types" value={essentialDataTypes} icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => navigate({name: 'progress-report'})} />
+          <StatCard title="Progress" value={essentialDataTypes} icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => navigate({name: 'progress-report'})} />
       </div>
 
       <Card>
