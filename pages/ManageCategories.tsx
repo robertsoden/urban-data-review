@@ -8,7 +8,7 @@ interface ManageCategoriesProps {
 }
 
 const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
-  const { categories, dataTypes, addCategory, updateCategory, deleteCategory, addNotification } = useData();
+  const { categories, dataTypes, addCategory, updateCategory, deleteCategory, regenerateCategoriesFromDataTypes, addNotification } = useData();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
 
@@ -77,12 +77,31 @@ const ManageCategories: React.FC<ManageCategoriesProps> = ({ navigate }) => {
     }
   };
 
+  const handleRegenerateCategories = async () => {
+    if (window.confirm('This will regenerate all categories from the current Data Types.\n\nAny manually created categories that are not used by Data Types will be removed.\n\nContinue?')) {
+      try {
+        await regenerateCategoriesFromDataTypes();
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Failed to regenerate categories.";
+        addNotification(errorMessage, "error");
+      }
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2">
-         <button onClick={() => navigate({ name: 'categories' })} className="mb-4 text-primary-600 hover:underline">
-          &larr; Back to Categories View
-        </button>
+         <div className="flex justify-between items-center mb-4">
+           <button onClick={() => navigate({ name: 'categories' })} className="text-primary-600 hover:underline">
+            &larr; Back to Categories View
+          </button>
+          <button
+            onClick={handleRegenerateCategories}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium"
+          >
+            Regenerate from Data Types
+          </button>
+         </div>
         <Card>
           <CardHeader>All Categories</CardHeader>
           <div className="overflow-x-auto">
