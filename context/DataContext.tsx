@@ -12,8 +12,8 @@ interface DataContextType {
   notifications: Notification[];
   loading: boolean;
   error: Error | null;
-  addDataType: (dataType: Omit<DataType, 'id' | 'created_at'>) => Promise<void>;
-  updateDataType: (id: string, dataType: Partial<DataType>) => Promise<void>;
+  addDataType: (dataType: Omit<DataType, 'id' | 'created_at'>, linkedDatasetIds?: string[]) => Promise<void>;
+  updateDataType: (id: string, dataType: Partial<DataType>, linkedDatasetIds?: string[]) => Promise<void>;
   deleteDataType: (id: string) => Promise<void>;
   addDataset: (dataset: Omit<Dataset, 'id' | 'created_at'>) => Promise<void>;
   updateDataset: (id: string, dataset: Partial<Dataset>) => Promise<void>;
@@ -187,29 +187,97 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addDataType = async (dataType: Omit<DataType, 'id' | 'created_at'>) => {
+  const addDataType = async (dataType: Omit<DataType, 'id' | 'created_at'>, linkedDatasetIds?: string[]) => {
+    // Check for duplicate names (case-insensitive)
+    const trimmedName = dataType.name.trim();
+    const isDuplicate = dataTypes.some(dt =>
+      dt.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      throw new Error(`A data type named "${trimmedName}" already exists. Please choose a different name.`);
+    }
+
     const newDataType: DataType = {
       ...dataType,
+      name: trimmedName,
       id: new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
     const newDataTypes = [...dataTypes, newDataType];
+
+    // Handle linked datasets if provided
+    let newDataTypeDatasets = dataTypeDatasets;
+    if (linkedDatasetIds && linkedDatasetIds.length > 0) {
+      const newLinks = linkedDatasetIds.map(datasetId => ({
+        id: `${newDataType.id}-${datasetId}`,
+        data_type_id: newDataType.id,
+        dataset_id: datasetId
+      }));
+      newDataTypeDatasets = [...dataTypeDatasets, ...newLinks];
+      setDataTypeDatasets(newDataTypeDatasets);
+    }
+
     setDataTypes(newDataTypes);
-    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
     addNotification('Data type added successfully', 'success');
   };
 
-  const updateDataType = async (id: string, dataType: Partial<DataType>) => {
+  const updateDataType = async (id: string, dataType: Partial<DataType>, linkedDatasetIds?: string[]) => {
+    // Check for duplicate names (case-insensitive, excluding self)
+    if (dataType.name) {
+      const trimmedName = dataType.name.trim();
+      const isDuplicate = dataTypes.some(dt =>
+        dt.name.toLowerCase() === trimmedName.toLowerCase() &&
+        dt.id !== id
+      );
+
+      if (isDuplicate) {
+        throw new Error(`A data type named "${trimmedName}" already exists. Please choose a different name.`);
+      }
+
+      dataType = { ...dataType, name: trimmedName };
+    }
+
     const newDataTypes = dataTypes.map(dt => dt.id === id ? { ...dt, ...dataType } : dt);
+
+    // Handle linked datasets if provided
+    let newDataTypeDatasets = dataTypeDatasets;
+    if (linkedDatasetIds !== undefined) {
+      // Remove existing links for this data type
+      newDataTypeDatasets = dataTypeDatasets.filter(link => link.data_type_id !== id);
+
+      // Add new links
+      if (linkedDatasetIds.length > 0) {
+        const newLinks = linkedDatasetIds.map(datasetId => ({
+          id: `${id}-${datasetId}`,
+          data_type_id: id,
+          dataset_id: datasetId
+        }));
+        newDataTypeDatasets = [...newDataTypeDatasets, ...newLinks];
+      }
+      setDataTypeDatasets(newDataTypeDatasets);
+    }
+
     setDataTypes(newDataTypes);
-    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
     addNotification('Data type updated successfully', 'success');
   };
 
   const deleteDataType = async (id: string) => {
     const newDataTypes = dataTypes.filter(dt => dt.id !== id);
+
+    // CASCADE: Remove all junction table links for this data type
+    const removedLinks = dataTypeDatasets.filter(link => link.data_type_id === id);
+    const newDataTypeDatasets = dataTypeDatasets.filter(link => link.data_type_id !== id);
+
     setDataTypes(newDataTypes);
-    persistIfNeeded(newDataTypes, datasets, categories, dataTypeDatasets);
+    setDataTypeDatasets(newDataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
+
+    if (removedLinks.length > 0) {
+      console.log(`[Cascade] Removed ${removedLinks.length} dataset link(s) for deleted data type`);
+    }
     addNotification('Data type deleted successfully', 'success');
   };
 
@@ -234,14 +302,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteDataset = async (id: string) => {
     const newDatasets = datasets.filter(ds => ds.id !== id);
+
+    // CASCADE: Remove all junction table links for this dataset
+    const removedLinks = dataTypeDatasets.filter(link => link.dataset_id === id);
+    const newDataTypeDatasets = dataTypeDatasets.filter(link => link.dataset_id !== id);
+
     setDatasets(newDatasets);
-    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
+    setDataTypeDatasets(newDataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, categories, newDataTypeDatasets);
+
+    if (removedLinks.length > 0) {
+      console.log(`[Cascade] Removed ${removedLinks.length} data type link(s) for deleted dataset`);
+    }
     addNotification('Dataset deleted successfully', 'success');
   };
 
   const addCategory = async (category: Omit<Category, 'id'>) => {
+    // Check for duplicate names (case-insensitive)
+    const trimmedName = category.name.trim();
+    const isDuplicate = categories.some(c =>
+      c.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      throw new Error(`A category named "${trimmedName}" already exists. Please choose a different name.`);
+    }
+
     const newCategory: Category = {
       ...category,
+      name: trimmedName,
       id: new Date().toISOString(),
     };
     const newCategories = [...categories, newCategory];
@@ -251,17 +340,82 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateCategory = async (id: string, category: Partial<Category>) => {
+    const oldCategory = categories.find(c => c.id === id);
+    if (!oldCategory) {
+      throw new Error('Category not found');
+    }
+
+    // Check for duplicate names (case-insensitive, excluding self)
+    if (category.name) {
+      const trimmedName = category.name.trim();
+      const isDuplicate = categories.some(c =>
+        c.name.toLowerCase() === trimmedName.toLowerCase() &&
+        c.id !== id
+      );
+
+      if (isDuplicate) {
+        throw new Error(`A category named "${trimmedName}" already exists. Please choose a different name.`);
+      }
+    }
+
     const newCategories = categories.map(c => c.id === id ? { ...c, ...category } : c);
+
+    // CASCADE: If category name changed, update all data types that reference it
+    let newDataTypes = dataTypes;
+    if (category.name && category.name !== oldCategory.name) {
+      const trimmedName = category.name.trim();
+      newDataTypes = dataTypes.map(dt =>
+        dt.category === oldCategory.name
+          ? { ...dt, category: trimmedName }
+          : dt
+      );
+      setDataTypes(newDataTypes);
+      console.log(`[Cascade] Updated ${newDataTypes.filter(dt => dt.category === trimmedName).length} data types from category "${oldCategory.name}" to "${trimmedName}"`);
+    }
+
     setCategories(newCategories);
-    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, newCategories, dataTypeDatasets);
     addNotification('Category updated successfully', 'success');
   };
 
   const deleteCategory = async (id: string) => {
-    const newCategories = categories.filter(c => c.id !== id);
+    const categoryToDelete = categories.find(c => c.id === id);
+    if (!categoryToDelete) {
+      throw new Error('Category not found');
+    }
+
+    const UNCATEGORIZED = "Uncategorized";
+
+    // CASCADE: Move all data types to "Uncategorized"
+    const affectedDataTypes = dataTypes.filter(dt => dt.category === categoryToDelete.name);
+    const newDataTypes = dataTypes.map(dt =>
+      dt.category === categoryToDelete.name
+        ? { ...dt, category: UNCATEGORIZED }
+        : dt
+    );
+
+    // Remove the category
+    let newCategories = categories.filter(c => c.id !== id);
+
+    // Ensure "Uncategorized" category exists if there were affected data types
+    if (affectedDataTypes.length > 0 && !newCategories.some(c => c.name === UNCATEGORIZED)) {
+      newCategories.push({
+        id: new Date().toISOString(),
+        name: UNCATEGORIZED,
+        description: "Data types without a specific category"
+      });
+    }
+
+    setDataTypes(newDataTypes);
     setCategories(newCategories);
-    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
-    addNotification('Category deleted successfully', 'success');
+    persistIfNeeded(newDataTypes, datasets, newCategories, dataTypeDatasets);
+
+    if (affectedDataTypes.length > 0) {
+      console.log(`[Cascade] Moved ${affectedDataTypes.length} data types from "${categoryToDelete.name}" to "${UNCATEGORIZED}"`);
+      addNotification(`Category deleted. ${affectedDataTypes.length} data type(s) moved to "Uncategorized".`, 'success');
+    } else {
+      addNotification('Category deleted successfully', 'success');
+    }
   };
 
   const exportData = () => {
