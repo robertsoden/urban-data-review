@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DataType, Dataset, Category, DataTypeDataset, Notification } from '../types';
-import { mockDataTypes, mockDatasets, mockCategories } from '../data/mockData';
+import { DataType, Dataset, InspireTheme, DataTypeDataset, Notification } from '../types';
+import { mockDataTypes, mockDatasets, mockInspireThemes } from '../data/mockData';
 import { db } from '../firebase';
 import { collection, getDocs, doc, setDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 
 interface DataContextType {
   dataTypes: DataType[];
   datasets: Dataset[];
-  categories: Category[];
+  inspireThemes: InspireTheme[];
   dataTypeDatasets: DataTypeDataset[];
   notifications: Notification[];
   loading: boolean;
@@ -18,14 +18,10 @@ interface DataContextType {
   addDataset: (dataset: Omit<Dataset, 'id' | 'created_at'>) => Promise<void>;
   updateDataset: (id: string, dataset: Partial<Dataset>) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
-  updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
-  deleteCategory: (id: string) => Promise<void>;
   addNotification: (message: string, type: 'success' | 'error') => void;
   clearNotification: (id: number) => void;
   exportData: () => void;
   importData: (file: File) => Promise<void>;
-  regenerateCategoriesFromDataTypes: () => Promise<void>;
   getDataTypeById: (id: string) => DataType | undefined;
   getDatasetById: (id: string) => Dataset | undefined;
   getDatasetsForDataType: (dataTypeId: string) => Dataset[];
@@ -38,7 +34,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // ===== TEMPORARY: localStorage support (remove when migrating to Firebase) =====
 const LOCALSTORAGE_KEY = 'urban-data-review-data';
 
-const saveToLocalStorage = (data: { dataTypes: DataType[], datasets: Dataset[], categories: Category[], dataTypeDatasets: DataTypeDataset[] }) => {
+const saveToLocalStorage = (data: { dataTypes: DataType[], datasets: Dataset[], inspireThemes: InspireTheme[], dataTypeDatasets: DataTypeDataset[] }) => {
   try {
     localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(data));
     console.log('[localStorage] Data saved successfully');
@@ -65,7 +61,7 @@ const loadFromLocalStorage = () => {
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [dataTypes, setDataTypes] = useState<DataType[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [inspireThemes, setInspireThemes] = useState<InspireTheme[]>([]);
   const [dataTypeDatasets, setDataTypeDatasets] = useState<DataTypeDataset[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -84,7 +80,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('Firebase not configured, loading from localStorage');
             setDataTypes(localData.dataTypes || []);
             setDatasets(localData.datasets || []);
-            setCategories(localData.categories || []);
+            setInspireThemes(localData.inspireThemes || []);
             setDataTypeDatasets(localData.dataTypeDatasets || []);
             setError(null);
             setLoading(false);
@@ -94,7 +90,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Firebase not configured, using mock data');
           setDataTypes(mockDataTypes);
           setDatasets(mockDatasets);
-          setCategories(mockCategories);
+          setInspireThemes(mockInspireThemes);
           setDataTypeDatasets([]);
           setError(null);
           setLoading(false);
@@ -104,18 +100,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Try to load from Firestore first
         const dataTypesSnapshot = await getDocs(collection(db, 'dataTypes'));
         const datasetsSnapshot = await getDocs(collection(db, 'datasets'));
-        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        const inspireThemesSnapshot = await getDocs(collection(db, 'inspireThemes'));
         const dataTypeDatasetsSnapshot = await getDocs(collection(db, 'dataTypeDatasets'));
 
         console.log('[DataContext] Firestore snapshot sizes:', {
           dataTypes: dataTypesSnapshot.size,
           datasets: datasetsSnapshot.size,
-          categories: categoriesSnapshot.size,
+          inspireThemes: inspireThemesSnapshot.size,
           dataTypeDatasets: dataTypeDatasetsSnapshot.size
         });
 
         // Check if any collection has data
-        const hasAnyData = !dataTypesSnapshot.empty || !datasetsSnapshot.empty || !categoriesSnapshot.empty || !dataTypeDatasetsSnapshot.empty;
+        const hasAnyData = !dataTypesSnapshot.empty || !datasetsSnapshot.empty || !inspireThemesSnapshot.empty || !dataTypeDatasetsSnapshot.empty;
 
         console.log('[DataContext] hasAnyData:', hasAnyData);
 
@@ -123,26 +119,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Load from Firestore (use empty arrays for empty collections)
           const loadedDataTypes = dataTypesSnapshot.docs.map(doc => doc.data() as DataType);
           const loadedDatasets = datasetsSnapshot.docs.map(doc => doc.data() as Dataset);
-          const loadedCategories = categoriesSnapshot.docs.map(doc => doc.data() as Category);
+          const loadedInspireThemes = inspireThemesSnapshot.docs.map(doc => doc.data() as InspireTheme);
           const loadedDataTypeDatasets = dataTypeDatasetsSnapshot.docs.map(doc => doc.data() as DataTypeDataset);
 
           console.log('[DataContext] Loaded from Firestore:', {
             dataTypes: loadedDataTypes.length,
             datasets: loadedDatasets.length,
-            categories: loadedCategories.length,
+            inspireThemes: loadedInspireThemes.length,
             dataTypeDatasets: loadedDataTypeDatasets.length
           });
 
           setDataTypes(loadedDataTypes);
           setDatasets(loadedDatasets);
-          setCategories(loadedCategories);
+          setInspireThemes(loadedInspireThemes);
           setDataTypeDatasets(loadedDataTypeDatasets);
         } else {
           // Use mock data as fallback only if ALL collections are empty
           console.log('[DataContext] Using mock data as fallback');
           setDataTypes(mockDataTypes);
           setDatasets(mockDatasets);
-          setCategories(mockCategories);
+          setInspireThemes(mockInspireThemes);
           setDataTypeDatasets([]);
         }
 
@@ -152,7 +148,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fall back to mock data on error
         setDataTypes(mockDataTypes);
         setDatasets(mockDatasets);
-        setCategories(mockCategories);
+        setInspireThemes(mockInspireThemes);
         setDataTypeDatasets([]);
         setError(null); // Don't show error to user, just fall back silently
       } finally{
@@ -177,12 +173,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // TEMPORARY: Helper to persist state changes to localStorage when Firebase is not configured
-  const persistIfNeeded = (newDataTypes: DataType[], newDatasets: Dataset[], newCategories: Category[], newDataTypeDatasets: DataTypeDataset[]) => {
+  const persistIfNeeded = (newDataTypes: DataType[], newDatasets: Dataset[], newInspireThemes: InspireTheme[], newDataTypeDatasets: DataTypeDataset[]) => {
     if (!db) {
       saveToLocalStorage({
         dataTypes: newDataTypes,
         datasets: newDatasets,
-        categories: newCategories,
+        inspireThemes: newInspireThemes,
         dataTypeDatasets: newDataTypeDatasets
       });
     }
@@ -220,7 +216,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setDataTypes(newDataTypes);
-    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, inspireThemes, newDataTypeDatasets);
     addNotification('Data type added successfully', 'success');
   };
 
@@ -261,7 +257,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setDataTypes(newDataTypes);
-    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, inspireThemes, newDataTypeDatasets);
     addNotification('Data type updated successfully', 'success');
   };
 
@@ -274,7 +270,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setDataTypes(newDataTypes);
     setDataTypeDatasets(newDataTypeDatasets);
-    persistIfNeeded(newDataTypes, datasets, categories, newDataTypeDatasets);
+    persistIfNeeded(newDataTypes, datasets, inspireThemes, newDataTypeDatasets);
 
     if (removedLinks.length > 0) {
       console.log(`[Cascade] Removed ${removedLinks.length} dataset link(s) for deleted data type`);
@@ -290,14 +286,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const newDatasets = [...datasets, newDataset];
     setDatasets(newDatasets);
-    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, inspireThemes, dataTypeDatasets);
     addNotification('Dataset added successfully', 'success');
   };
 
   const updateDataset = async (id: string, dataset: Partial<Dataset>) => {
     const newDatasets = datasets.map(ds => ds.id === id ? { ...ds, ...dataset } : ds);
     setDatasets(newDatasets);
-    persistIfNeeded(dataTypes, newDatasets, categories, dataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, inspireThemes, dataTypeDatasets);
     addNotification('Dataset updated successfully', 'success');
   };
 
@@ -310,7 +306,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setDatasets(newDatasets);
     setDataTypeDatasets(newDataTypeDatasets);
-    persistIfNeeded(dataTypes, newDatasets, categories, newDataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, inspireThemes, newDataTypeDatasets);
 
     if (removedLinks.length > 0) {
       console.log(`[Cascade] Removed ${removedLinks.length} data type link(s) for deleted dataset`);
@@ -318,112 +314,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addNotification('Dataset deleted successfully', 'success');
   };
 
-  const addCategory = async (category: Omit<Category, 'id'>) => {
-    // Check for duplicate names (case-insensitive)
-    const trimmedName = category.name.trim();
-    const isDuplicate = categories.some(c =>
-      c.name.toLowerCase() === trimmedName.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      throw new Error(`A category named "${trimmedName}" already exists. Please choose a different name.`);
-    }
-
-    const newCategory: Category = {
-      ...category,
-      name: trimmedName,
-      id: new Date().toISOString(),
-    };
-    const newCategories = [...categories, newCategory];
-    setCategories(newCategories);
-    persistIfNeeded(dataTypes, datasets, newCategories, dataTypeDatasets);
-    addNotification('Category added successfully', 'success');
-  };
-
-  const updateCategory = async (id: string, category: Partial<Category>) => {
-    const oldCategory = categories.find(c => c.id === id);
-    if (!oldCategory) {
-      throw new Error('Category not found');
-    }
-
-    // Check for duplicate names (case-insensitive, excluding self)
-    if (category.name) {
-      const trimmedName = category.name.trim();
-      const isDuplicate = categories.some(c =>
-        c.name.toLowerCase() === trimmedName.toLowerCase() &&
-        c.id !== id
-      );
-
-      if (isDuplicate) {
-        throw new Error(`A category named "${trimmedName}" already exists. Please choose a different name.`);
-      }
-    }
-
-    const newCategories = categories.map(c => c.id === id ? { ...c, ...category } : c);
-
-    // CASCADE: If category name changed, update all data types that reference it
-    let newDataTypes = dataTypes;
-    if (category.name && category.name !== oldCategory.name) {
-      const trimmedName = category.name.trim();
-      newDataTypes = dataTypes.map(dt =>
-        dt.category === oldCategory.name
-          ? { ...dt, category: trimmedName }
-          : dt
-      );
-      setDataTypes(newDataTypes);
-      console.log(`[Cascade] Updated ${newDataTypes.filter(dt => dt.category === trimmedName).length} data types from category "${oldCategory.name}" to "${trimmedName}"`);
-    }
-
-    setCategories(newCategories);
-    persistIfNeeded(newDataTypes, datasets, newCategories, dataTypeDatasets);
-    addNotification('Category updated successfully', 'success');
-  };
-
-  const deleteCategory = async (id: string) => {
-    const categoryToDelete = categories.find(c => c.id === id);
-    if (!categoryToDelete) {
-      throw new Error('Category not found');
-    }
-
-    const UNCATEGORIZED = "Uncategorized";
-
-    // CASCADE: Move all data types to "Uncategorized"
-    const affectedDataTypes = dataTypes.filter(dt => dt.category === categoryToDelete.name);
-    const newDataTypes = dataTypes.map(dt =>
-      dt.category === categoryToDelete.name
-        ? { ...dt, category: UNCATEGORIZED }
-        : dt
-    );
-
-    // Remove the category
-    let newCategories = categories.filter(c => c.id !== id);
-
-    // Ensure "Uncategorized" category exists if there were affected data types
-    if (affectedDataTypes.length > 0 && !newCategories.some(c => c.name === UNCATEGORIZED)) {
-      newCategories.push({
-        id: new Date().toISOString(),
-        name: UNCATEGORIZED,
-        description: "Data types without a specific category"
-      });
-    }
-
-    setDataTypes(newDataTypes);
-    setCategories(newCategories);
-    persistIfNeeded(newDataTypes, datasets, newCategories, dataTypeDatasets);
-
-    if (affectedDataTypes.length > 0) {
-      console.log(`[Cascade] Moved ${affectedDataTypes.length} data types from "${categoryToDelete.name}" to "${UNCATEGORIZED}"`);
-      addNotification(`Category deleted. ${affectedDataTypes.length} data type(s) moved to "Uncategorized".`, 'success');
-    } else {
-      addNotification('Category deleted successfully', 'success');
-    }
-  };
-
   const exportData = () => {
     const data = {
       dataTypes,
       datasets,
-      categories,
+      inspireThemes,
       dataTypeDatasets,
       exportedAt: new Date().toISOString(),
     };
@@ -486,7 +381,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (missingFields.length > 0) {
             throw new Error(
               `Invalid data format: missing required fields: ${missingFields.join(', ')}. ` +
-              `Expected format: { dataTypes: [], datasets: [], categories: [], dataTypeDatasets: [] }`
+              `Expected format: { dataTypes: [], datasets: [], inspireThemes: [], dataTypeDatasets: [] }`
             );
           }
 
@@ -502,8 +397,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           // Validate optional fields are arrays if present
-          if (data.categories && !Array.isArray(data.categories)) {
-            throw new Error('Invalid data format: categories must be an array');
+          if (data.inspireThemes && !Array.isArray(data.inspireThemes)) {
+            throw new Error('Invalid data format: inspireThemes must be an array');
           }
           if (data.dataTypeDatasets && !Array.isArray(data.dataTypeDatasets)) {
             throw new Error('Invalid data format: dataTypeDatasets must be an array');
@@ -512,33 +407,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Set defaults for optional fields
           const dataTypeDatasets = data.dataTypeDatasets || [];
 
-          // Generate categories from unique DataType.category values (ignore categories array in file)
-          const uniqueCategoryNames = new Set<string>();
+          // Generate inspireThemes from unique DataType.inspire_theme values
+          const uniqueThemeNames = new Set<string>();
           data.dataTypes.forEach((dt: any) => {
-            if (dt.category && typeof dt.category === 'string' && dt.category.trim()) {
-              uniqueCategoryNames.add(dt.category.trim());
+            if (dt.inspire_theme && typeof dt.inspire_theme === 'string' && dt.inspire_theme.trim()) {
+              uniqueThemeNames.add(dt.inspire_theme.trim());
             }
           });
 
-          console.log(`[Import] Unique category names extracted from DataTypes:`, Array.from(uniqueCategoryNames).sort());
+          console.log(`[Import] Unique INSPIRE theme names extracted from DataTypes:`, Array.from(uniqueThemeNames).sort());
 
-          // Create category objects from unique names
-          const categories: Category[] = Array.from(uniqueCategoryNames).map((name, index) => ({
-            id: `cat-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
+          // Create inspireTheme objects from unique names
+          const inspireThemes: InspireTheme[] = Array.from(uniqueThemeNames).map((name, index) => ({
+            id: `theme-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
             name: name,
-            description: `Category for ${name} data types`
+            description: `INSPIRE theme for ${name}`
           }));
 
-          console.log(`[Import] Generated categories:`, categories.map(c => ({ id: c.id, name: c.name })));
-          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${categories.length} categories (generated from DataTypes), ${dataTypeDatasets.length} dataTypeDatasets`);
+          console.log(`[Import] Generated inspireThemes:`, inspireThemes.map(t => ({ id: t.id, name: t.name })));
+          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${inspireThemes.length} inspireThemes (generated from DataTypes), ${dataTypeDatasets.length} dataTypeDatasets`);
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
-            'id', 'name', 'category', 'description', 'priority',
-            'completion_status', 'minimum_criteria', 'notes', 'key_attributes',
-            'applicable_standards', 'rdls_can_handle',
-            'rdls_component', 'rdls_notes', 'created_at',
-            'iso_sector', 'inspire_spec', 'rdls_coverage', 'rdls_extension_module'
+            'id', 'name', 'inspire_theme', 'inspire_annex', 'inspire_spec',
+            'description', 'applicable_standards', 'minimum_criteria',
+            'rdls_coverage', 'rdls_extension_module', 'created_at'
           ];
 
           data.dataTypes.forEach((item: any, index: number) => {
@@ -570,15 +463,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
 
-          // Validate individual Category items (if present)
-          if (categories.length > 0) {
-            const requiredCategoryFields = ['id', 'name', 'description'];
+          // Validate individual InspireTheme items (if present)
+          if (inspireThemes.length > 0) {
+            const requiredThemeFields = ['id', 'name', 'description'];
 
-            categories.forEach((item: any, index: number) => {
-              const missing = requiredCategoryFields.filter(field => !(field in item));
+            inspireThemes.forEach((item: any, index: number) => {
+              const missing = requiredThemeFields.filter(field => !(field in item));
               if (missing.length > 0) {
                 throw new Error(
-                  `Invalid Category at index ${index} (name: "${item.name || 'unknown'}"): ` +
+                  `Invalid InspireTheme at index ${index} (name: "${item.name || 'unknown'}"): ` +
                   `missing required fields: ${missing.join(', ')}`
                 );
               }
@@ -609,14 +502,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Update state
             setDataTypes(data.dataTypes);
             setDatasets(data.datasets);
-            setCategories(categories);
+            setInspireThemes(inspireThemes);
             setDataTypeDatasets(dataTypeDatasets);
 
             // Persist to localStorage
             saveToLocalStorage({
               dataTypes: data.dataTypes,
               datasets: data.datasets,
-              categories: categories,
+              inspireThemes: inspireThemes,
               dataTypeDatasets: dataTypeDatasets
             });
 
@@ -631,18 +524,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Delete existing data from Firestore
           // Use smaller batch size and add delays to avoid rate limiting
           const BATCH_LIMIT = 400; // Reduced from 500 to be more conservative
-          const collectionsToDelete = ['dataTypes', 'datasets', 'categories', 'dataTypeDatasets'];
+          const collectionsToDelete = ['dataTypes', 'datasets', 'inspireThemes', 'dataTypeDatasets'];
 
           console.log('[Import] Deleting existing data...');
           for (const collectionName of collectionsToDelete) {
             const snapshot = await getDocs(collection(db, collectionName));
             const totalDocs = snapshot.docs.length;
             console.log(`[Import] Found ${totalDocs} documents in ${collectionName} to delete...`);
-
-            // Extra logging for categories to debug the issue
-            if (collectionName === 'categories' && totalDocs > 0) {
-              console.log(`[Import] Categories to be deleted:`, snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            }
 
             let deleteBatch = writeBatch(db);
             let deleteCount = 0;
@@ -678,7 +566,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Split into chunks to avoid Firestore's 500 operation limit
           let batch = writeBatch(db);
           let operationCount = 0;
-          let totalOperations = data.dataTypes.length + data.datasets.length + categories.length + dataTypeDatasets.length;
+          let totalOperations = data.dataTypes.length + data.datasets.length + inspireThemes.length + dataTypeDatasets.length;
           let completedOperations = 0;
 
           const commitBatchIfNeeded = async (force: boolean = false) => {
@@ -718,23 +606,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await commitBatchIfNeeded(true);
           console.log('[Import] Datasets saved');
 
-          // Save categories
-          console.log(`[Import] Saving ${categories.length} categories...`);
-          console.log(`[Import] Categories being saved:`, categories.map(c => ({ id: c.id, name: c.name })));
-          for (const item of categories) {
+          // Save inspireThemes
+          console.log(`[Import] Saving ${inspireThemes.length} inspireThemes...`);
+          console.log(`[Import] InspireThemes being saved:`, inspireThemes.map(t => ({ id: t.id, name: t.name })));
+          for (const item of inspireThemes) {
             await commitBatchIfNeeded();
-            const docRef = doc(db, 'categories', String(item.id));
+            const docRef = doc(db, 'inspireThemes', String(item.id));
             batch.set(docRef, item);
             operationCount++;
             completedOperations++;
           }
           await commitBatchIfNeeded(true);
-          console.log('[Import] Categories saved to Firestore');
-
-          // Verify what was actually saved
-          const verifySnapshot = await getDocs(collection(db, 'categories'));
-          console.log(`[Import] Verification: ${verifySnapshot.size} categories now in Firestore:`,
-            verifySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
+          console.log('[Import] InspireThemes saved to Firestore');
 
           // Save dataTypeDatasets
           console.log(`[Import] Saving ${dataTypeDatasets.length} dataTypeDatasets...`);
@@ -753,7 +636,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Only update state AFTER successful Firestore write
           setDataTypes(data.dataTypes);
           setDatasets(data.datasets);
-          setCategories(categories);
+          setInspireThemes(inspireThemes);
           setDataTypeDatasets(dataTypeDatasets);
 
           console.log('[Import] Import completed successfully!');
@@ -778,76 +661,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  // Diagnostic function to help debug category issues
-  const regenerateCategoriesFromDataTypes = async () => {
-    console.log('[RegenerateCategories] Starting category regeneration from current DataTypes...');
-
-    // Extract unique category names from current DataTypes
-    const categoryMap = new Map<string, number>();
-    dataTypes.forEach(dt => {
-      if (dt.category && typeof dt.category === 'string' && dt.category.trim()) {
-        const categoryName = dt.category.trim();
-        categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1);
-      }
-    });
-
-    console.log('[RegenerateCategories] Category breakdown:');
-    const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    sortedCategories.forEach(([name, count]) => {
-      console.log(`  - ${name}: ${count} data types`);
-    });
-
-    console.log(`[RegenerateCategories] Total unique categories: ${categoryMap.size}`);
-
-    // Generate new category objects
-    const newCategories: Category[] = Array.from(categoryMap.keys()).map((name, index) => ({
-      id: `cat-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
-      name: name,
-      description: `Category for ${name} data types`
-    }));
-
-    console.log('[RegenerateCategories] Generated categories:', newCategories.map(c => ({ id: c.id, name: c.name })));
-
-    // Save to Firestore if configured
-    if (db) {
-      console.log('[RegenerateCategories] Deleting old categories from Firestore...');
-      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-      const deleteBatch = writeBatch(db);
-      categoriesSnapshot.docs.forEach(doc => {
-        deleteBatch.delete(doc.ref);
-      });
-      await deleteBatch.commit();
-      console.log(`[RegenerateCategories] Deleted ${categoriesSnapshot.size} old categories`);
-
-      console.log('[RegenerateCategories] Saving new categories to Firestore...');
-      const saveBatch = writeBatch(db);
-      newCategories.forEach(category => {
-        const docRef = doc(db, 'categories', String(category.id));
-        saveBatch.set(docRef, category);
-      });
-      await saveBatch.commit();
-      console.log(`[RegenerateCategories] Saved ${newCategories.length} new categories`);
-    } else {
-      console.log('[RegenerateCategories] Firebase not configured, saving to localStorage...');
-      saveToLocalStorage({
-        dataTypes,
-        datasets,
-        categories: newCategories,
-        dataTypeDatasets
-      });
-    }
-
-    // Update state
-    setCategories(newCategories);
-    addNotification(`Categories regenerated: ${newCategories.length} categories created from DataTypes`, 'success');
-    console.log('[RegenerateCategories] Complete!');
-  };
-
   return (
     <DataContext.Provider value={{
       dataTypes,
       datasets,
-      categories,
+      inspireThemes,
       dataTypeDatasets,
       notifications,
       loading,
@@ -858,14 +676,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addDataset,
       updateDataset,
       deleteDataset,
-      addCategory,
-      updateCategory,
-      deleteCategory,
       addNotification,
       clearNotification,
       exportData,
       importData,
-      regenerateCategoriesFromDataTypes,
       getDataTypeById,
       getDatasetById,
       getDatasetsForDataType,

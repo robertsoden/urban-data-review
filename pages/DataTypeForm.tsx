@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { Page, DataType, Priority, CompletionStatus, RdlsStatus, RdlsCoverage } from '../types';
+import { Page, DataType } from '../types';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 
 interface DataTypeFormProps {
@@ -9,16 +9,19 @@ interface DataTypeFormProps {
 }
 
 const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
-  const { datasets, categories, getDataTypeById, getDatasetsForDataType, addDataType, updateDataType, deleteDataType, addNotification } = useData();
+  const { datasets, inspireThemes, getDataTypeById, getDatasetsForDataType, addDataType, updateDataType, deleteDataType, addNotification } = useData();
   const isEditMode = id !== undefined;
 
   const [formData, setFormData] = useState<Omit<DataType, 'id' | 'created_at'> | DataType>({
-    name: '', category: categories[0]?.name || '', description: '',
-    priority: Priority.Unassigned, completion_status: CompletionStatus.NotStarted,
-    minimum_criteria: '', notes: '', key_attributes: '[]', applicable_standards: '',
-    rdls_can_handle: RdlsStatus.Unassigned,
-    rdls_component: '', rdls_notes: '',
-    iso_sector: '', inspire_spec: '', rdls_coverage: RdlsCoverage.Unassigned, rdls_extension_module: ''
+    name: '',
+    inspire_theme: inspireThemes[0]?.name || '',
+    inspire_annex: 'Annex III',
+    inspire_spec: '',
+    description: '',
+    applicable_standards: '',
+    minimum_criteria: '',
+    rdls_coverage: '',
+    rdls_extension_module: ''
   });
   const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<string>>(new Set());
 
@@ -37,7 +40,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleLinkChange = (datasetId: string) => {
     setLinkedDatasetIds(prev => {
       const newSet = new Set(prev);
@@ -71,7 +74,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
         addNotification(errorMessage, 'error');
     }
   };
-  
+
   const handleDelete = async () => {
     if (!isEditMode || !formData) return;
 
@@ -127,53 +130,42 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
                     <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={inputClasses} />
                 </FormRow>
               </div>
-               <FormRow label="Category" htmlFor="category">
-                  <select id="category" name="category" value={formData.category} onChange={handleChange} className={inputClasses}>
-                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                  </select>
+              <FormRow label="INSPIRE Theme" htmlFor="inspire_theme">
+                <select id="inspire_theme" name="inspire_theme" value={formData.inspire_theme} onChange={handleChange} className={inputClasses}>
+                  {inspireThemes.map(theme => <option key={theme.id} value={theme.name}>{theme.name}</option>)}
+                </select>
               </FormRow>
-               <div className="md:col-span-3">
-                  <FormRow label="Description" htmlFor="description">
-                      <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={3} className={inputClasses} />
-                  </FormRow>
-              </div>
-              <FormRow label="Priority" htmlFor="priority">
-                  <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className={inputClasses}>
-                      {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+              <FormRow label="INSPIRE Annex" htmlFor="inspire_annex">
+                <select id="inspire_annex" name="inspire_annex" value={formData.inspire_annex} onChange={handleChange} className={inputClasses}>
+                  <option value="Annex I">Annex I</option>
+                  <option value="Annex II">Annex II</option>
+                  <option value="Annex III">Annex III</option>
+                </select>
               </FormRow>
-               <FormRow label="Completion Status" htmlFor="completion_status">
-                  <select id="completion_status" name="completion_status" value={formData.completion_status} onChange={handleChange} className={inputClasses}>
-                      {Object.values(CompletionStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-              </FormRow>
-              <div className="md:col-span-3">
-                  <FormRow label="Key Attributes (JSON Array)" htmlFor="key_attributes">
-                      <textarea id="key_attributes" name="key_attributes" value={formData.key_attributes} onChange={handleChange} rows={3} className={`${inputClasses} font-mono`} />
-                  </FormRow>
-              </div>
-               <div className="md:col-span-3">
-                  <FormRow label="Notes" htmlFor="notes">
-                      <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className={inputClasses} />
-                  </FormRow>
-              </div>
-            </div>
-
-            {/* New fields section - Standards & RDLS */}
-            <div className="pt-6 border-t border-neutral-200">
-              <h3 className="text-lg font-medium text-neutral-900 mb-4">Standards & RDLS Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormRow label="ISO Sector" htmlFor="iso_sector">
-                    <input type="text" id="iso_sector" name="iso_sector" value={formData.iso_sector} onChange={handleChange} className={inputClasses} />
-                </FormRow>
+              <div className="md:col-span-2">
                 <FormRow label="INSPIRE Specification" htmlFor="inspire_spec">
-                    <input type="text" id="inspire_spec" name="inspire_spec" value={formData.inspire_spec} onChange={handleChange} className={inputClasses} />
+                    <input type="text" id="inspire_spec" name="inspire_spec" value={formData.inspire_spec} onChange={handleChange} className={inputClasses} placeholder="e.g., D2.8.III.2 Buildings v3.0" />
                 </FormRow>
-                <FormRow label="RDLS Coverage" htmlFor="rdls_coverage">
-                    <select id="rdls_coverage" name="rdls_coverage" value={formData.rdls_coverage} onChange={handleChange} className={inputClasses}>
-                        {Object.values(RdlsCoverage).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+              </div>
+              <div className="md:col-span-3">
+                <FormRow label="Description" htmlFor="description">
+                    <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={3} className={inputClasses} />
                 </FormRow>
+              </div>
+              <div className="md:col-span-3">
+                <FormRow label="Applicable Standards" htmlFor="applicable_standards">
+                    <input type="text" id="applicable_standards" name="applicable_standards" value={formData.applicable_standards} onChange={handleChange} className={inputClasses} />
+                </FormRow>
+              </div>
+              <div className="md:col-span-3">
+                <FormRow label="Minimum Criteria" htmlFor="minimum_criteria">
+                    <textarea id="minimum_criteria" name="minimum_criteria" value={formData.minimum_criteria} onChange={handleChange} rows={2} className={inputClasses} />
+                </FormRow>
+              </div>
+              <FormRow label="RDLS Coverage" htmlFor="rdls_coverage">
+                  <input type="text" id="rdls_coverage" name="rdls_coverage" value={formData.rdls_coverage} onChange={handleChange} className={inputClasses} />
+              </FormRow>
+              <div className="md:col-span-2">
                 <FormRow label="RDLS Extension Module" htmlFor="rdls_extension_module">
                     <input type="text" id="rdls_extension_module" name="rdls_extension_module" value={formData.rdls_extension_module} onChange={handleChange} className={inputClasses} />
                 </FormRow>
@@ -184,7 +176,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Link to Datasets</label>
                 <div className="border border-neutral-300 rounded-lg max-h-60 overflow-y-auto">
                   <div className="divide-y divide-neutral-200">
-                      {datasets.map(ds => (
+                      {datasets.length > 0 ? datasets.map(ds => (
                           <div key={ds.id} className="relative flex items-start p-4 hover:bg-neutral-50 transition-colors">
                               <div className="min-w-0 flex-1 text-sm">
                                   <label htmlFor={`link-${ds.id}`} className="font-medium text-neutral-700 select-none cursor-pointer">{ds.name}</label>
@@ -199,7 +191,9 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
                                   />
                               </div>
                           </div>
-                      ))}
+                      )) : (
+                        <p className="p-4 text-neutral-500 italic">No datasets available. Add datasets first to link them.</p>
+                      )}
                   </div>
                 </div>
             </div>

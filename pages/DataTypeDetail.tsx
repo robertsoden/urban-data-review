@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardHeader, CardContent } from '../components/Card';
-import { CompletionStatusBadge, PriorityBadge, RdlsStatusBadge } from '../components/Badge';
+import { AnnexBadge } from '../components/Badge';
 
 interface DataTypeDetailProps {
   navigate: (page: Page) => void;
@@ -19,7 +18,6 @@ const DetailItem: React.FC<{ label: string; children: React.ReactNode; fullWidth
 
 const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
   const { getDataTypeById, getDatasetsForDataType } = useData();
-  const showProgress = import.meta.env.VITE_SHOW_PROGRESS === 'true';
   const dataType = getDataTypeById(id);
   const linkedDatasets = getDatasetsForDataType(id);
 
@@ -34,22 +32,6 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
     );
   }
 
-  const renderJsonAttributes = (jsonString: string) => {
-      try {
-          const attributes = JSON.parse(jsonString);
-          if (Array.isArray(attributes) && attributes.length > 0) {
-              return (
-                  <ul className="list-disc list-inside space-y-1">
-                      {attributes.map((attr, index) => <li key={index}><code className="bg-neutral-200 text-neutral-800 text-xs px-2 py-1 rounded">{attr}</code></li>)}
-                  </ul>
-              )
-          }
-      } catch (e) {
-          // fall through to return original string if not valid json
-      }
-      return <p>{jsonString || <span className="text-neutral-400 italic">Not specified</span>}</p>
-  }
-
   return (
     <div className="space-y-6">
       <button
@@ -62,7 +44,7 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-neutral-800">{dataType.name}</h1>
-          <p className="mt-1 text-neutral-600">{dataType.category}</p>
+          <p className="mt-1 text-neutral-600">{dataType.inspire_theme}</p>
         </div>
         <button
           onClick={() => navigate({ name: 'data-type-edit', id: dataType.id })}
@@ -71,30 +53,25 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
           Edit Data Type
         </button>
       </div>
-      
+
       <Card>
-        <CardHeader>Core Information</CardHeader>
+        <CardHeader>INSPIRE Classification</CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-            <DetailItem label="Description" fullWidth>{dataType.description}</DetailItem>
-            <DetailItem label="Priority"><PriorityBadge priority={dataType.priority} /></DetailItem>
-            {showProgress && <DetailItem label="Completion Status"><CompletionStatusBadge status={dataType.completion_status} /></DetailItem>}
-            <DetailItem label="Minimum Criteria" fullWidth>{dataType.minimum_criteria}</DetailItem>
-            <DetailItem label="General Notes" fullWidth>{dataType.notes}</DetailItem>
+            <DetailItem label="INSPIRE Theme">{dataType.inspire_theme}</DetailItem>
+            <DetailItem label="INSPIRE Annex"><AnnexBadge annex={dataType.inspire_annex} /></DetailItem>
+            <DetailItem label="INSPIRE Specification">{dataType.inspire_spec}</DetailItem>
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader>Technical Details</CardHeader>
+        <CardHeader>Core Information</CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-            <DetailItem label="Key Attributes">
-                {renderJsonAttributes(dataType.key_attributes)}
-            </DetailItem>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            <DetailItem label="Description" fullWidth>{dataType.description}</DetailItem>
             <DetailItem label="Applicable Standards">{dataType.applicable_standards}</DetailItem>
-            <DetailItem label="ISO Sector">{dataType.iso_sector}</DetailItem>
-            <DetailItem label="INSPIRE Specification" fullWidth>{dataType.inspire_spec}</DetailItem>
+            <DetailItem label="Minimum Criteria" fullWidth>{dataType.minimum_criteria}</DetailItem>
           </div>
         </CardContent>
       </Card>
@@ -102,12 +79,9 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
       <Card>
         <CardHeader>RDLS Integration</CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-            <DetailItem label="Can be handled by RDLS?"><RdlsStatusBadge status={dataType.rdls_can_handle} /></DetailItem>
-            <DetailItem label="RDLS Component">{dataType.rdls_component}</DetailItem>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
             <DetailItem label="RDLS Coverage">{dataType.rdls_coverage}</DetailItem>
             <DetailItem label="RDLS Extension Module">{dataType.rdls_extension_module}</DetailItem>
-            <DetailItem label="RDLS Notes" fullWidth>{dataType.rdls_notes}</DetailItem>
           </div>
         </CardContent>
       </Card>

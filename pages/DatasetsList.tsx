@@ -8,9 +8,9 @@ interface DatasetsListProps {
 }
 
 const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
-  const { datasets, dataTypes, categories, getDataTypesForDataset } = useData();
+  const { datasets, dataTypes, inspireThemes, getDataTypesForDataset } = useData();
 
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [themeFilter, setThemeFilter] = useState<string>('All');
   const [dataTypeFilter, setDataTypeFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -19,9 +19,9 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
       // Get linked data types for this dataset
       const linkedDataTypes = getDataTypesForDataset(ds.id);
 
-      // Category filter - check if any linked data type matches the category
-      const categoryMatch = categoryFilter === 'All' ||
-        linkedDataTypes.some(dt => dt.category === categoryFilter);
+      // Theme filter - check if any linked data type matches the theme
+      const themeMatch = themeFilter === 'All' ||
+        linkedDataTypes.some(dt => dt.inspire_theme === themeFilter);
 
       // Data type filter - check if the specific data type is linked
       const dataTypeMatch = dataTypeFilter === 'All' ||
@@ -32,9 +32,9 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
         ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ds.source_organization.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return categoryMatch && dataTypeMatch && searchMatch;
+      return themeMatch && dataTypeMatch && searchMatch;
     });
-  }, [datasets, categoryFilter, dataTypeFilter, searchTerm, getDataTypesForDataset]);
+  }, [datasets, themeFilter, dataTypeFilter, searchTerm, getDataTypesForDataset]);
 
   return (
     <div className="space-y-6">
@@ -52,15 +52,15 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="category-filter" className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
+              <label htmlFor="theme-filter" className="block text-sm font-medium text-neutral-700 mb-1">INSPIRE Theme</label>
               <select
-                id="category-filter"
-                value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
+                id="theme-filter"
+                value={themeFilter}
+                onChange={e => setThemeFilter(e.target.value)}
                 className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
               >
-                <option value="All">All Categories</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                <option value="All">All Themes</option>
+                {inspireThemes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
               </select>
             </div>
             <div>

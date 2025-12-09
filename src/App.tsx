@@ -3,7 +3,6 @@ import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import Header from '../components/Header';
 import Home from '../pages/Home';
-import Dashboard from '../pages/Dashboard';
 import DataTypesList from '../pages/DataTypesList';
 import DataTypeDetail from '../pages/DataTypeDetail';
 import DataTypeForm from '../pages/DataTypeForm';
@@ -11,8 +10,7 @@ import DatasetsList from '../pages/DatasetsList';
 import DatasetDetail from '../pages/DatasetDetail';
 import DatasetForm from '../pages/DatasetForm';
 import ProgressReport from '../pages/ProgressReport';
-import Categories from '../pages/Categories';
-import ManageCategories from '../pages/ManageCategories';
+import InspireThemes from '../pages/InspireThemes';
 import ImportExport from '../pages/ImportExport';
 import NotificationPopup from '../components/NotificationPopup';
 import PasswordProtect from './PasswordProtect';
@@ -32,8 +30,7 @@ const App: React.FC = () => {
       case 'data-types':
         return <DataTypesList
                   navigate={navigate}
-                  initialCategory={'initialCategory' in page ? page.initialCategory : undefined}
-                  initialStatus={'initialStatus' in page ? page.initialStatus : undefined}
+                  initialTheme={'initialTheme' in page ? page.initialTheme : undefined}
                 />;
       case 'data-type-detail':
         return <DataTypeDetail navigate={navigate} id={page.id} />;
@@ -51,10 +48,8 @@ const App: React.FC = () => {
         return <DatasetForm navigate={navigate} id={page.id} />;
       case 'progress-report':
         return <ProgressReport navigate={navigate} />;
-      case 'categories':
-        return <Categories navigate={navigate} />;
-      case 'manage-categories':
-        return <ManageCategories navigate={navigate} />;
+      case 'inspire-themes':
+        return <InspireThemes navigate={navigate} />;
       case 'import-export':
         return <ImportExport navigate={navigate} />;
       default:

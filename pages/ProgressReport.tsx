@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { Page, DataType, Priority } from '../types';
+import { Page } from '../types';
 import { Card } from '../components/Card';
 import { CheckIcon, XIcon } from '../components/Icons';
 
@@ -12,12 +12,12 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
   const { dataTypes, getDatasetsForDataType } = useData();
 
   const sortedDataTypes = useMemo(() => {
-    const priorityOrder = {
-      [Priority.Essential]: 1,
-      [Priority.Beneficial]: 2,
-      [Priority.Low]: 3,
-    };
-    return [...dataTypes].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    // Sort by INSPIRE theme then by name
+    return [...dataTypes].sort((a, b) => {
+      const themeCompare = a.inspire_theme.localeCompare(b.inspire_theme);
+      if (themeCompare !== 0) return themeCompare;
+      return a.name.localeCompare(b.name);
+    });
   }, [dataTypes]);
 
   const Checkmark: React.FC<{ condition: boolean }> = ({ condition }) => (
@@ -29,7 +29,7 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
       <div className="mb-4">
         <h1 className="text-3xl font-bold text-neutral-800">Progress Report</h1>
         <p className="text-neutral-600 mt-1">
-          A summary of missing information for each data type, sorted by priority.
+          A summary of missing information for each data type, sorted by INSPIRE theme.
         </p>
       </div>
 
@@ -37,9 +37,10 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
         <table className="w-full text-left">
           <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
             <tr>
-              <th className="p-3">Data Type (Priority)</th>
+              <th className="p-3">Data Type</th>
+              <th className="p-3">Theme</th>
               <th className="p-3 text-center">Has Example Dataset?</th>
-              <th className="p-3 text-center">Has Key Attributes?</th>
+              <th className="p-3 text-center">Has Minimum Criteria?</th>
               <th className="p-3 text-center">Has Standards?</th>
             </tr>
           </thead>
@@ -50,13 +51,14 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
                   className="p-3 font-medium text-neutral-900 cursor-pointer hover:text-primary-600 transition-colors"
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
-                  {dt.name} <span className="font-normal text-neutral-500">({dt.priority})</span>
+                  {dt.name}
                 </td>
+                <td className="p-3 text-neutral-600">{dt.inspire_theme}</td>
                 <td className="p-3">
                   <Checkmark condition={getDatasetsForDataType(dt.id).length > 0} />
                 </td>
                 <td className="p-3">
-                  <Checkmark condition={!!dt.key_attributes && dt.key_attributes.trim() !== '' && dt.key_attributes.trim() !== '[]'} />
+                  <Checkmark condition={!!dt.minimum_criteria && dt.minimum_criteria.trim() !== ''} />
                 </td>
                 <td className="p-3">
                   <Checkmark condition={!!dt.applicable_standards && dt.applicable_standards.trim() !== ''} />

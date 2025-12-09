@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
 import { DocumentTextIcon, DatabaseIcon, CollectionIcon } from '../components/Icons';
-import { CompletionStatusBadge, RdlsStatusBadge } from '../components/Badge';
+import { AnnexBadge } from '../components/Badge';
 
 interface HomeProps {
   navigate: (page: Page) => void;
@@ -29,8 +29,7 @@ const StatCard: React.FC<{ title: string; value: number | string; icon: React.Re
 );
 
 const Home: React.FC<HomeProps> = ({ navigate }) => {
-  const { dataTypes, datasets, categories } = useData();
-  const showProgress = import.meta.env.VITE_SHOW_PROGRESS === 'true';
+  const { dataTypes, datasets, inspireThemes } = useData();
 
   return (
     <div className="space-y-6">
@@ -42,7 +41,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Data Types" value={dataTypes.length} icon={<DocumentTextIcon className="w-6 h-6" />} onClick={() => navigate({name: 'data-types'})} />
         <StatCard title="Total Datasets" value={datasets.length} icon={<DatabaseIcon className="w-6 h-6" />} onClick={() => navigate({name: 'datasets'})} />
-        <StatCard title="Total Categories" value={categories.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'categories'})} />
+        <StatCard title="INSPIRE Themes" value={inspireThemes.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'inspire-themes'})} />
       </div>
 
       <div>
@@ -58,9 +57,8 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDL Ready</th>
-                {showProgress && <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Status</th>}
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">INSPIRE Theme</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Annex</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
@@ -71,14 +69,13 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
-                  <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
-                  <td className="px-4 py-3"><RdlsStatusBadge status={dt.rdls_can_handle} /></td>
-                  {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
+                  <td className="px-4 py-3 text-neutral-600">{dt.inspire_theme}</td>
+                  <td className="px-4 py-3"><AnnexBadge annex={dt.inspire_annex} /></td>
                 </tr>
               ))}
               {dataTypes.length === 0 && (
                 <tr>
-                  <td colSpan={showProgress ? 4 : 3} className="text-center py-12 text-neutral-500">
+                  <td colSpan={3} className="text-center py-12 text-neutral-500">
                     No data types found.
                   </td>
                 </tr>

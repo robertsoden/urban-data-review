@@ -1,7 +1,7 @@
 export type Page =
   | { name: 'home' }
   | { name: 'dashboard' }
-  | { name: 'data-types', initialCategory?: string, initialStatus?: CompletionStatus }
+  | { name: 'data-types', initialTheme?: string }
   | { name: 'data-type-detail', id: string }
   | { name: 'data-type-add' }
   | { name: 'data-type-edit', id: string }
@@ -9,40 +9,11 @@ export type Page =
   | { name: 'dataset-detail', id: string }
   | { name: 'dataset-add' }
   | { name: 'dataset-edit', id: string }
-  | { name: 'categories' }
-  | { name: 'manage-categories' }
+  | { name: 'inspire-themes' }
   | { name: 'progress-report' }
   | { name: 'import-export' };
 
-export enum CompletionStatus {
-  Complete = 'Complete',
-  InProgress = 'In Progress',
-  NotStarted = 'Not Started',
-}
-
-export enum Priority {
-  Essential = 'Essential',
-  Beneficial = 'Beneficial',
-  Low = 'Low',
-  Unassigned = 'Unassigned',
-}
-
-export enum RdlsStatus {
-  Yes = 'Yes',
-  No = 'No',
-  Partial = 'Partial',
-  Check = 'Check',
-  Unassigned = 'Unassigned',
-}
-
-export enum RdlsCoverage {
-  ExtensionNeeded = 'Extension Needed',
-  Handles = 'Handles',
-  Partial = 'Partial',
-  Unassigned = 'Unassigned',
-}
-
-export interface Category {
+export interface InspireTheme {
   id: string;
   name: string;
   description: string;
@@ -51,23 +22,15 @@ export interface Category {
 export interface DataType {
   id: string;
   name: string;
-  category: string;
-  description: string;
-  priority: Priority;
-  completion_status: CompletionStatus;
-  minimum_criteria: string;
-  notes: string;
-  key_attributes: string; // JSON string
-  applicable_standards: string;
-  rdls_can_handle: RdlsStatus;
-  rdls_component: string;
-  rdls_notes: string;
-  created_at: string;
-  // New fields added 2025-11-18
-  iso_sector: string;
+  inspire_theme: string;
+  inspire_annex: string;
   inspire_spec: string;
-  rdls_coverage: RdlsCoverage;
+  description: string;
+  applicable_standards: string;
+  minimum_criteria: string;
+  rdls_coverage: string;
   rdls_extension_module: string;
+  created_at: string;
 }
 
 export interface Dataset {
