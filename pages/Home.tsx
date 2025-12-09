@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
@@ -7,6 +7,16 @@ import { DocumentTextIcon, DatabaseIcon, CollectionIcon } from '../components/Ic
 interface HomeProps {
   navigate: (page: Page) => void;
 }
+
+type SortColumn = 'name' | 'inspire_theme' | 'rdls_coverage';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon: React.FC<{ column: SortColumn; currentSort: SortColumn; direction: SortDirection }> = ({ column, currentSort, direction }) => {
+  if (column !== currentSort) {
+    return <span className="ml-1 text-neutral-300">↕</span>;
+  }
+  return <span className="ml-1">{direction === 'asc' ? '↑' : '↓'}</span>;
+};
 
 const StatCard: React.FC<{ title: string; value: number | string; icon: React.ReactNode; onClick: () => void; }> = ({ title, value, icon, onClick }) => (
   <Card
@@ -29,6 +39,28 @@ const StatCard: React.FC<{ title: string; value: number | string; icon: React.Re
 
 const Home: React.FC<HomeProps> = ({ navigate }) => {
   const { dataTypes, datasets, inspireThemes } = useData();
+
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedDataTypes = useMemo(() => {
+    return [...dataTypes].sort((a, b) => {
+      const aVal = (a[sortColumn] || '').toLowerCase();
+      const bVal = (b[sortColumn] || '').toLowerCase();
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [dataTypes, sortColumn, sortDirection]);
 
   return (
     <div className="space-y-6">
@@ -55,13 +87,28 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
             <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDLS Status</th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('name')}
+                >
+                  Name<SortIcon column="name" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('inspire_theme')}
+                >
+                  Category<SortIcon column="inspire_theme" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('rdls_coverage')}
+                >
+                  RDLS Status<SortIcon column="rdls_coverage" currentSort={sortColumn} direction={sortDirection} />
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {dataTypes.map(dt => (
+              {sortedDataTypes.map(dt => (
                 <tr
                   key={dt.id}
                   className="hover:bg-neutral-50 cursor-pointer transition-colors"
@@ -72,7 +119,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
                   <td className="px-4 py-3 text-neutral-600">{dt.rdls_coverage || <span className="text-neutral-400 italic">Not specified</span>}</td>
                 </tr>
               ))}
-              {dataTypes.length === 0 && (
+              {sortedDataTypes.length === 0 && (
                 <tr>
                   <td colSpan={3} className="text-center py-12 text-neutral-500">
                     No data types found.
