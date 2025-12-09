@@ -9,63 +9,80 @@ interface ImportExportProps {
 
 
 const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
-    const { exportData, importData, addNotification, dataTypes, datasets, regenerateCategoriesFromDataTypes } = useData();
+    const { exportData, importData, addNotification, dataTypes, datasets, categories, dataTypeDatasets, regenerateCategoriesFromDataTypes } = useData();
     const [isImporting, setIsImporting] = useState(false);
 
     const exportAsCSV = () => {
-        // Create a combined CSV with data types and datasets
-        const csvRows: string[] = [];
+        const csvSections: string[] = [];
 
-        // Header row
-        csvRows.push('Type,Name,Category,Description,Priority,Source Organization,URL,Format,Coverage,Resolution');
+        const escapeCsvField = (field: any): string => {
+            if (field === null || field === undefined) {
+                return '""';
+            }
+            const str = String(field);
+            // Replace quotes with double quotes and wrap in quotes
+            return `"${str.replace(/"/g, '""')}"`;
+        };
 
-        // Add data types
-        dataTypes.forEach(dt => {
-            const row = [
-                'Data Type',
-                `"${dt.name.replace(/"/g, '""')}"`,
-                `"${dt.category.replace(/"/g, '""')}"`,
-                `"${(dt.description || '').replace(/"/g, '""')}"`,
-                dt.priority,
-                '', // no source org for data types
-                '', // no URL for data types
-                '', // no format
-                '', // no coverage
-                '' // no resolution
-            ];
-            csvRows.push(row.join(','));
-        });
+        // Section 1: Data Types
+        const dataTypeHeaders = [
+            'id', 'name', 'category', 'description', 'priority', 'completion_status',
+            'minimum_criteria', 'notes', 'key_attributes', 'applicable_standards',
+            'rdls_can_handle', 'rdls_component', 'rdls_notes', 'created_at',
+            'iso_sector', 'inspire_spec', 'rdls_coverage', 'rdls_extension_module'
+        ];
+        let dataTypeRows = dataTypes.map(dt =>
+            dataTypeHeaders.map(header => escapeCsvField(dt[header as keyof typeof dt])).join(',')
+        );
+        csvSections.push('DataTypes');
+        csvSections.push(dataTypeHeaders.join(','));
+        csvSections.push(...dataTypeRows);
 
-        // Add datasets
-        datasets.forEach(ds => {
-            const row = [
-                'Dataset',
-                `"${ds.name.replace(/"/g, '""')}"`,
-                '', // no category for datasets
-                `"${(ds.description || '').replace(/"/g, '""')}"`,
-                '', // no priority
-                `"${(ds.source_organization || '').replace(/"/g, '""')}"`,
-                `"${(ds.url || '').replace(/"/g, '""')}"`,
-                `"${(ds.format || '').replace(/"/g, '""')}"`,
-                `"${(ds.geographic_coverage || '').replace(/"/g, '""')}"`,
-                `"${(ds.resolution || '').replace(/"/g, '""')}"`,
-            ];
-            csvRows.push(row.join(','));
-        });
+        // Section 2: Datasets
+        const datasetHeaders = [
+            'id', 'name', 'url', 'description', 'source_organization', 'source_type',
+            'geographic_coverage', 'temporal_coverage', 'format', 'resolution',
+            'access_type', 'license', 'is_validated', 'is_primary_example',
+            'quality_notes', 'used_in_projects', 'notes', 'created_at'
+        ];
+        let datasetRows = datasets.map(ds =>
+            datasetHeaders.map(header => escapeCsvField(ds[header as keyof typeof ds])).join(',')
+        );
+        csvSections.push('\nDatasets');
+        csvSections.push(datasetHeaders.join(','));
+        csvSections.push(...datasetRows);
 
-        const csvContent = csvRows.join('\n');
+        // Section 3: Categories
+        const categoryHeaders = ['id', 'name', 'description'];
+        let categoryRows = categories.map(cat =>
+            categoryHeaders.map(header => escapeCsvField(cat[header as keyof typeof cat])).join(',')
+        );
+        csvSections.push('\nCategories');
+        csvSections.push(categoryHeaders.join(','));
+        csvSections.push(...categoryRows);
+
+        // Section 4: DataTypeDataset Relationships
+        const relationshipHeaders = ['id', 'data_type_id', 'dataset_id'];
+        let relationshipRows = dataTypeDatasets.map(rel =>
+            relationshipHeaders.map(header => escapeCsvField(rel[header as keyof typeof rel])).join(',')
+        );
+        csvSections.push('\nDataTypeDatasetRelationships');
+        csvSections.push(relationshipHeaders.join(','));
+        csvSections.push(...relationshipRows);
+
+        const csvContent = csvSections.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = `urban-data-catalog-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `urban-data-catalog-full-export-${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        addNotification('Data exported as CSV successfully', 'success');
+        addNotification('Full data exported as CSV successfully', 'success');
     };
 
     const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +144,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                         </li>
                         <li className="flex items-start">
                             <span className="font-semibold text-neutral-800 min-w-[60px]">CSV:</span>
-                            <span>Simple spreadsheet format for data analysis in Excel or other tools.</span>
+                            <span>Full backup in spreadsheet format. Cannot be re-imported.</span>
                         </li>
                     </ul>
                     <div className="flex gap-3">

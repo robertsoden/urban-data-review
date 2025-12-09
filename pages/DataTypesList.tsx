@@ -1,15 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { Page } from '../types';
+import { Page, DataType } from '../types';
 import { Card, CardContent } from '../components/Card';
-import { AnnexBadge } from '../components/Badge';
+import { CompletionStatusBadge, RdlsStatusBadge } from '../components/Badge';
+import { useSort } from '../hooks/useSort';
+import { ArrowUpIcon, ArrowDownIcon } from '../components/Icons';
 
 interface DataTypesListProps {
   navigate: (page: Page) => void;
   initialTheme?: string;
+  showProgress?: boolean;
 }
 
-const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme }) => {
+const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme, showProgress }) => {
   const { dataTypes, inspireThemes } = useData();
 
   const [themeFilter, setThemeFilter] = useState<string>('All');
@@ -26,6 +29,22 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme })
       return themeMatch && searchMatch;
     });
   }, [dataTypes, themeFilter, searchTerm]);
+
+  const { sortedData, handleSort, sortColumn, sortDirection } = useSort<DataType>(filteredDataTypes, 'name');
+
+  const SortableHeader: React.FC<{ column: keyof DataType; children: React.ReactNode }> = ({ column, children }) => (
+    <th
+      className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer"
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center">
+        {children}
+        {sortColumn === column && (
+          sortDirection === 'asc' ? <ArrowUpIcon className="w-4 h-4 ml-1" /> : <ArrowDownIcon className="w-4 h-4 ml-1" />
+        )}
+      </div>
+    </th>
+  );
 
   return (
     <div className="space-y-6">
@@ -74,26 +93,28 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme })
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">INSPIRE Theme</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Annex</th>
+                <SortableHeader column="name">Name</SortableHeader>
+                <SortableHeader column="category">Category</SortableHeader>
+                <SortableHeader column="rdls_can_handle">Can be handled by RDLS?</SortableHeader>
+                {showProgress && <SortableHeader column="completion_status">Status</SortableHeader>}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {filteredDataTypes.map(dt => (
+              {sortedData.map(dt => (
                 <tr
                   key={dt.id}
                   className="hover:bg-neutral-50 cursor-pointer transition-colors"
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
-                  <td className="px-4 py-3 text-neutral-600">{dt.inspire_theme}</td>
-                  <td className="px-4 py-3"><AnnexBadge annex={dt.inspire_annex} /></td>
+                  <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
+                  <td className="px-4 py-3"><RdlsStatusBadge status={dt.rdls_can_handle} /></td>
+                  {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
                 </tr>
               ))}
-              {filteredDataTypes.length === 0 && (
+              {sortedData.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center py-12 text-neutral-500">
+                  <td colSpan={showProgress ? 4 : 3} className="text-center py-12 text-neutral-500">
                     No data types match the current filters.
                   </td>
                 </tr>
