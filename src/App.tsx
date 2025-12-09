@@ -11,6 +11,7 @@ import DatasetDetail from '../pages/DatasetDetail';
 import DatasetForm from '../pages/DatasetForm';
 import ProgressReport from '../pages/ProgressReport';
 import InspireThemes from '../pages/InspireThemes';
+import ManageCategories from '../pages/ManageCategories';
 import ImportExport from '../pages/ImportExport';
 import NotificationPopup from '../components/NotificationPopup';
 import PasswordProtect from './PasswordProtect';
@@ -50,6 +51,8 @@ const App: React.FC = () => {
         return <ProgressReport navigate={navigate} />;
       case 'inspire-themes':
         return <InspireThemes navigate={navigate} />;
+      case 'manage-categories':
+        return <ManageCategories navigate={navigate} />;
       case 'import-export':
         return <ImportExport navigate={navigate} />;
       default:

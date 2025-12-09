@@ -8,6 +8,15 @@ interface DataTypeFormProps {
   id?: string;
 }
 
+const FormRow: React.FC<{children: React.ReactNode, required?: boolean, label: string, htmlFor: string}> = ({children, required, label, htmlFor}) => (
+  <div>
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-neutral-700 mb-1">
+        {label} {required && <span className="text-red-600">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
 const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
   const { datasets, inspireThemes, getDataTypeById, getDatasetsForDataType, addDataType, updateDataType, deleteDataType, addNotification } = useData();
   const isEditMode = id !== undefined;
@@ -95,15 +104,6 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     }
   }
 
-  const FormRow: React.FC<{children: React.ReactNode, required?: boolean, label: string, htmlFor: string}> = ({children, required, label, htmlFor}) => (
-      <div>
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-neutral-700 mb-1">
-            {label} {required && <span className="text-red-600">*</span>}
-        </label>
-        {children}
-      </div>
-  );
-
   const inputClasses = "block w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
 
   const backLink = isEditMode && id ? { name: 'data-type-detail', id: id } as Page : { name: 'data-types' } as Page;
@@ -130,7 +130,7 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
                     <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={inputClasses} />
                 </FormRow>
               </div>
-              <FormRow label="INSPIRE Theme" htmlFor="inspire_theme">
+              <FormRow label="Category" htmlFor="inspire_theme">
                 <select id="inspire_theme" name="inspire_theme" value={formData.inspire_theme} onChange={handleChange} className={inputClasses}>
                   {inspireThemes.map(theme => <option key={theme.id} value={theme.name}>{theme.name}</option>)}
                 </select>

@@ -55,10 +55,10 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
       </div>
 
       <Card>
-        <CardHeader>INSPIRE Classification</CardHeader>
+        <CardHeader>Classification</CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-            <DetailItem label="INSPIRE Theme">{dataType.inspire_theme}</DetailItem>
+            <DetailItem label="Category">{dataType.inspire_theme}</DetailItem>
             <DetailItem label="INSPIRE Annex"><AnnexBadge annex={dataType.inspire_annex} /></DetailItem>
             <DetailItem label="INSPIRE Specification">{dataType.inspire_spec}</DetailItem>
           </div>

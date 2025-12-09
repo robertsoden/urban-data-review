@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ navigate }) => {
           <nav className="hidden md:flex gap-4">
             <NavItem onClick={() => navigate({ name: 'data-types' })}>Data Types</NavItem>
             <NavItem onClick={() => navigate({ name: 'datasets' })}>Datasets</NavItem>
-            <NavItem onClick={() => navigate({ name: 'inspire-themes' })}>INSPIRE Themes</NavItem>
+            <NavItem onClick={() => navigate({ name: 'inspire-themes' })}>Categories</NavItem>
             <NavItem onClick={() => navigate({ name: 'import-export' })}>Import/Export</NavItem>
           </nav>
         </div>

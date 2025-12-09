@@ -1,18 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { Page, DataType } from '../types';
+import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
-import { CompletionStatusBadge, RdlsStatusBadge } from '../components/Badge';
-import { useSort } from '../hooks/useSort';
-import { ArrowUpIcon, ArrowDownIcon } from '../components/Icons';
 
 interface DataTypesListProps {
   navigate: (page: Page) => void;
   initialTheme?: string;
-  showProgress?: boolean;
 }
 
-const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme, showProgress }) => {
+const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme }) => {
   const { dataTypes, inspireThemes } = useData();
 
   const [themeFilter, setThemeFilter] = useState<string>('All');
@@ -30,22 +26,6 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme, s
     });
   }, [dataTypes, themeFilter, searchTerm]);
 
-  const { sortedData, handleSort, sortColumn, sortDirection } = useSort<DataType>(filteredDataTypes, 'name');
-
-  const SortableHeader: React.FC<{ column: keyof DataType; children: React.ReactNode }> = ({ column, children }) => (
-    <th
-      className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer"
-      onClick={() => handleSort(column)}
-    >
-      <div className="flex items-center">
-        {children}
-        {sortColumn === column && (
-          sortDirection === 'asc' ? <ArrowUpIcon className="w-4 h-4 ml-1" /> : <ArrowDownIcon className="w-4 h-4 ml-1" />
-        )}
-      </div>
-    </th>
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -62,14 +42,14 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme, s
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="theme-filter" className="block text-sm font-medium text-neutral-700 mb-1">INSPIRE Theme</label>
+              <label htmlFor="theme-filter" className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
               <select
                 id="theme-filter"
                 value={themeFilter}
                 onChange={e => setThemeFilter(e.target.value)}
                 className="block w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
               >
-                <option value="All">All Themes</option>
+                <option value="All">All Categories</option>
                 {inspireThemes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
               </select>
             </div>
@@ -93,28 +73,26 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme, s
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <SortableHeader column="name">Name</SortableHeader>
-                <SortableHeader column="category">Category</SortableHeader>
-                <SortableHeader column="rdls_can_handle">Can be handled by RDLS?</SortableHeader>
-                {showProgress && <SortableHeader column="completion_status">Status</SortableHeader>}
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDLS Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {sortedData.map(dt => (
+              {filteredDataTypes.map(dt => (
                 <tr
                   key={dt.id}
                   className="hover:bg-neutral-50 cursor-pointer transition-colors"
                   onClick={() => navigate({ name: 'data-type-detail', id: dt.id })}
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
-                  <td className="px-4 py-3 text-neutral-600">{dt.category}</td>
-                  <td className="px-4 py-3"><RdlsStatusBadge status={dt.rdls_can_handle} /></td>
-                  {showProgress && <td className="px-4 py-3"><CompletionStatusBadge status={dt.completion_status} /></td>}
+                  <td className="px-4 py-3 text-neutral-600">{dt.inspire_theme}</td>
+                  <td className="px-4 py-3 text-neutral-600">{dt.rdls_coverage || <span className="text-neutral-400 italic">Not specified</span>}</td>
                 </tr>
               ))}
-              {sortedData.length === 0 && (
+              {filteredDataTypes.length === 0 && (
                 <tr>
-                  <td colSpan={showProgress ? 4 : 3} className="text-center py-12 text-neutral-500">
+                  <td colSpan={3} className="text-center py-12 text-neutral-500">
                     No data types match the current filters.
                   </td>
                 </tr>

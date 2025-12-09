@@ -10,6 +10,7 @@ export type Page =
   | { name: 'dataset-add' }
   | { name: 'dataset-edit', id: string }
   | { name: 'inspire-themes' }
+  | { name: 'manage-categories' }
   | { name: 'progress-report' }
   | { name: 'import-export' };
 

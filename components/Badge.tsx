@@ -24,20 +24,4 @@ export const AnnexBadge: React.FC<{ annex: string }> = ({ annex }) => {
   return <Badge text={annex || 'N/A'} colorClass={colorClass} />;
 };
 
-export const RdlsStatusBadge: React.FC<{ status: boolean }> = ({ status }) => {
-    const text = status ? 'Yes' : 'No';
-    const colorClass = status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-    return <Badge text={text} colorClass={colorClass} />;
-};
-
-export const CompletionStatusBadge: React.FC<{ status: string }> = ({ status }) => {
-    const colorMap: Record<string, string> = {
-        'Complete': 'bg-green-100 text-green-800',
-        'In Progress': 'bg-yellow-100 text-yellow-800',
-        'Not Started': 'bg-red-100 text-red-800',
-    };
-    const colorClass = colorMap[status] || 'bg-gray-100 text-gray-800';
-    return <Badge text={status} colorClass={colorClass} />;
-};
-
 export default Badge;

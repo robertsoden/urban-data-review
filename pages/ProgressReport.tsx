@@ -29,7 +29,7 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
       <div className="mb-4">
         <h1 className="text-3xl font-bold text-neutral-800">Progress Report</h1>
         <p className="text-neutral-600 mt-1">
-          A summary of missing information for each data type, sorted by INSPIRE theme.
+          A summary of missing information for each data type, sorted by category.
         </p>
       </div>
 
@@ -38,7 +38,7 @@ const ProgressReport: React.FC<ProgressReportProps> = ({ navigate }) => {
           <thead className="bg-neutral-100 text-xs text-neutral-500 uppercase tracking-wider">
             <tr>
               <th className="p-3">Data Type</th>
-              <th className="p-3">Theme</th>
+              <th className="p-3">Category</th>
               <th className="p-3 text-center">Has Example Dataset?</th>
               <th className="p-3 text-center">Has Minimum Criteria?</th>
               <th className="p-3 text-center">Has Standards?</th>

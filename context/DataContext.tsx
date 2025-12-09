@@ -15,9 +15,12 @@ interface DataContextType {
   addDataType: (dataType: Omit<DataType, 'id' | 'created_at'>, linkedDatasetIds?: string[]) => Promise<void>;
   updateDataType: (id: string, dataType: Partial<DataType>, linkedDatasetIds?: string[]) => Promise<void>;
   deleteDataType: (id: string) => Promise<void>;
-  addDataset: (dataset: Omit<Dataset, 'id' | 'created_at'>) => Promise<void>;
-  updateDataset: (id: string, dataset: Partial<Dataset>) => Promise<void>;
+  addDataset: (dataset: Omit<Dataset, 'id' | 'created_at'>, linkedDataTypeIds?: string[]) => Promise<void>;
+  updateDataset: (id: string, dataset: Partial<Dataset>, linkedDataTypeIds?: string[]) => Promise<void>;
   deleteDataset: (id: string) => Promise<void>;
+  addCategory: (category: Omit<InspireTheme, 'id'>) => Promise<void>;
+  updateCategory: (id: string, category: Partial<InspireTheme>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   addNotification: (message: string, type: 'success' | 'error') => void;
   clearNotification: (id: number) => void;
   exportData: () => void;
@@ -278,22 +281,54 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addNotification('Data type deleted successfully', 'success');
   };
 
-  const addDataset = async (dataset: Omit<Dataset, 'id' | 'created_at'>) => {
+  const addDataset = async (dataset: Omit<Dataset, 'id' | 'created_at'>, linkedDataTypeIds?: string[]) => {
     const newDataset: Dataset = {
       ...dataset,
       id: new Date().toISOString(),
       created_at: new Date().toISOString(),
     };
     const newDatasets = [...datasets, newDataset];
+
+    // Handle linked data types if provided
+    let newDataTypeDatasets = dataTypeDatasets;
+    if (linkedDataTypeIds && linkedDataTypeIds.length > 0) {
+      const newLinks = linkedDataTypeIds.map(dataTypeId => ({
+        id: `${dataTypeId}-${newDataset.id}`,
+        data_type_id: dataTypeId,
+        dataset_id: newDataset.id
+      }));
+      newDataTypeDatasets = [...dataTypeDatasets, ...newLinks];
+      setDataTypeDatasets(newDataTypeDatasets);
+    }
+
     setDatasets(newDatasets);
-    persistIfNeeded(dataTypes, newDatasets, inspireThemes, dataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, inspireThemes, newDataTypeDatasets);
     addNotification('Dataset added successfully', 'success');
   };
 
-  const updateDataset = async (id: string, dataset: Partial<Dataset>) => {
+  const updateDataset = async (id: string, dataset: Partial<Dataset>, linkedDataTypeIds?: string[]) => {
     const newDatasets = datasets.map(ds => ds.id === id ? { ...ds, ...dataset } : ds);
+
+    // Handle linked data types if provided
+    let newDataTypeDatasets = dataTypeDatasets;
+    if (linkedDataTypeIds !== undefined) {
+      // Remove existing links for this dataset
+      newDataTypeDatasets = dataTypeDatasets.filter(link => link.dataset_id !== id);
+
+      // Add new links
+      if (linkedDataTypeIds.length > 0) {
+        const newLinks = linkedDataTypeIds.map(dataTypeId => ({
+          id: `${dataTypeId}-${id}`,
+          data_type_id: dataTypeId,
+          dataset_id: id
+        }));
+        newDataTypeDatasets = [...newDataTypeDatasets, ...newLinks];
+      }
+      setDataTypeDatasets(newDataTypeDatasets);
+    }
+
     setDatasets(newDatasets);
-    persistIfNeeded(dataTypes, newDatasets, inspireThemes, dataTypeDatasets);
+    persistIfNeeded(dataTypes, newDatasets, inspireThemes, newDataTypeDatasets);
     addNotification('Dataset updated successfully', 'success');
   };
 
@@ -312,6 +347,85 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`[Cascade] Removed ${removedLinks.length} data type link(s) for deleted dataset`);
     }
     addNotification('Dataset deleted successfully', 'success');
+  };
+
+  const addCategory = async (category: Omit<InspireTheme, 'id'>) => {
+    // Check for duplicate names
+    const trimmedName = category.name.trim();
+    const isDuplicate = inspireThemes.some(t =>
+      t.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      throw new Error(`A category named "${trimmedName}" already exists.`);
+    }
+
+    const newCategory: InspireTheme = {
+      ...category,
+      name: trimmedName,
+      id: `theme-${Date.now()}`,
+    };
+    const newThemes = [...inspireThemes, newCategory];
+    setInspireThemes(newThemes);
+    persistIfNeeded(dataTypes, datasets, newThemes, dataTypeDatasets);
+    addNotification('Category added successfully', 'success');
+  };
+
+  const updateCategory = async (id: string, category: Partial<InspireTheme>) => {
+    const oldCategory = inspireThemes.find(t => t.id === id);
+    if (!oldCategory) {
+      throw new Error('Category not found');
+    }
+
+    // Check for duplicate names (excluding self)
+    if (category.name) {
+      const trimmedName = category.name.trim();
+      const isDuplicate = inspireThemes.some(t =>
+        t.name.toLowerCase() === trimmedName.toLowerCase() && t.id !== id
+      );
+
+      if (isDuplicate) {
+        throw new Error(`A category named "${trimmedName}" already exists.`);
+      }
+      category = { ...category, name: trimmedName };
+    }
+
+    const newThemes = inspireThemes.map(t => t.id === id ? { ...t, ...category } : t);
+
+    // CASCADE: Update inspire_theme in all data types that use this category
+    if (category.name && category.name !== oldCategory.name) {
+      const newDataTypes = dataTypes.map(dt =>
+        dt.inspire_theme === oldCategory.name
+          ? { ...dt, inspire_theme: category.name! }
+          : dt
+      );
+      setDataTypes(newDataTypes);
+      setInspireThemes(newThemes);
+      persistIfNeeded(newDataTypes, datasets, newThemes, dataTypeDatasets);
+    } else {
+      setInspireThemes(newThemes);
+      persistIfNeeded(dataTypes, datasets, newThemes, dataTypeDatasets);
+    }
+
+    addNotification('Category updated successfully', 'success');
+  };
+
+  const deleteCategory = async (id: string) => {
+    const category = inspireThemes.find(t => t.id === id);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Check if any data types use this category
+    const usedByDataTypes = dataTypes.filter(dt => dt.inspire_theme === category.name);
+    if (usedByDataTypes.length > 0) {
+      throw new Error(`Cannot delete category "${category.name}" because it is used by ${usedByDataTypes.length} data type(s).`);
+    }
+
+    const newThemes = inspireThemes.filter(t => t.id !== id);
+    setInspireThemes(newThemes);
+    persistIfNeeded(dataTypes, datasets, newThemes, dataTypeDatasets);
+    addNotification('Category deleted successfully', 'success');
   };
 
   const exportData = () => {
@@ -676,6 +790,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addDataset,
       updateDataset,
       deleteDataset,
+      addCategory,
+      updateCategory,
+      deleteCategory,
       addNotification,
       clearNotification,
       exportData,

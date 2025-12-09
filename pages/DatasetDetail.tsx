@@ -123,7 +123,7 @@ const DatasetDetail: React.FC<DatasetDetailProps> = ({ navigate, id }) => {
                                           {dt.name}
                                       </span>
                                   </td>
-                                  <td className="p-3 text-neutral-600">{dt.category}</td>
+                                  <td className="p-3 text-neutral-600">{dt.inspire_theme}</td>
                               </tr>
                           ))}
                       </tbody>

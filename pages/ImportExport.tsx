@@ -9,7 +9,7 @@ interface ImportExportProps {
 
 
 const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
-    const { exportData, importData, addNotification, dataTypes, datasets, categories, dataTypeDatasets, regenerateCategoriesFromDataTypes } = useData();
+    const { exportData, importData, addNotification, dataTypes, datasets, inspireThemes, dataTypeDatasets } = useData();
     const [isImporting, setIsImporting] = useState(false);
 
     const exportAsCSV = () => {
@@ -26,10 +26,9 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
 
         // Section 1: Data Types
         const dataTypeHeaders = [
-            'id', 'name', 'category', 'description', 'priority', 'completion_status',
-            'minimum_criteria', 'notes', 'key_attributes', 'applicable_standards',
-            'rdls_can_handle', 'rdls_component', 'rdls_notes', 'created_at',
-            'iso_sector', 'inspire_spec', 'rdls_coverage', 'rdls_extension_module'
+            'id', 'name', 'inspire_theme', 'inspire_annex', 'inspire_spec',
+            'description', 'applicable_standards', 'minimum_criteria',
+            'rdls_coverage', 'rdls_extension_module', 'created_at'
         ];
         let dataTypeRows = dataTypes.map(dt =>
             dataTypeHeaders.map(header => escapeCsvField(dt[header as keyof typeof dt])).join(',')
@@ -52,14 +51,14 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
         csvSections.push(datasetHeaders.join(','));
         csvSections.push(...datasetRows);
 
-        // Section 3: Categories
-        const categoryHeaders = ['id', 'name', 'description'];
-        let categoryRows = categories.map(cat =>
-            categoryHeaders.map(header => escapeCsvField(cat[header as keyof typeof cat])).join(',')
+        // Section 3: INSPIRE Themes (Categories)
+        const themeHeaders = ['id', 'name', 'description'];
+        let themeRows = inspireThemes.map(theme =>
+            themeHeaders.map(header => escapeCsvField(theme[header as keyof typeof theme])).join(',')
         );
-        csvSections.push('\nCategories');
-        csvSections.push(categoryHeaders.join(','));
-        csvSections.push(...categoryRows);
+        csvSections.push('\nInspireThemes');
+        csvSections.push(themeHeaders.join(','));
+        csvSections.push(...themeRows);
 
         // Section 4: DataTypeDataset Relationships
         const relationshipHeaders = ['id', 'data_type_id', 'dataset_id'];
@@ -108,18 +107,6 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
              // Reset file input if user cancels
             if (event.target) {
                 event.target.value = '';
-            }
-        }
-    }
-
-    const handleRegenerateCategories = async () => {
-        if (window.confirm("Are you sure you want to regenerate categories? This will delete all existing categories and create new ones from the data types.")) {
-            try {
-                await regenerateCategoriesFromDataTypes();
-                addNotification("Categories regenerated successfully!", "success");
-            } catch (error: any) {
-                console.error("Category regeneration failed:", error);
-                addNotification(`Category regeneration failed: ${error.message}`, "error");
             }
         }
     }
@@ -193,26 +180,6 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>Diagnostic Tools</CardHeader>
-                <CardContent>
-                    <p className="text-neutral-600 mb-4">
-                        If you are experiencing issues with categories not appearing correctly, you can use this tool to fix it.
-                    </p>
-                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-md">
-                        <p className="font-semibold text-blue-900 mb-1">ℹ️ What does this do?</p>
-                        <p className="text-blue-800 text-sm">
-                            This will delete all existing categories and regenerate them based on the "category" field of each individual data type. This is useful if the categories have become out of sync.
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleRegenerateCategories}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
-                    >
-                        Regenerate Categories
-                    </button>
-                </CardContent>
-            </Card>
         </div>
     );
 }

@@ -8,6 +8,15 @@ interface DatasetFormProps {
   id?: string;
 }
 
+const FormRow: React.FC<{children: React.ReactNode, required?: boolean, label: string, htmlFor: string}> = ({children, required, label, htmlFor}) => (
+  <div>
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-neutral-700 mb-1">
+        {label} {required && <span className="text-red-600">*</span>}
+    </label>
+    {children}
+  </div>
+);
+
 const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
   const { dataTypes, getDatasetById, getDataTypesForDataset, addDataset, updateDataset, deleteDataset, addNotification } = useData();
   const isEditMode = id !== undefined;
@@ -65,49 +74,29 @@ const DatasetForm: React.FC<DatasetFormProps> = ({ navigate, id }) => {
     }
 
     try {
-        if (isEditMode) {
-            await updateDataset({
-                dataset: formData as Dataset,
-                linkedDataTypeIds: Array.from(linkedDataTypeIds) as any,
-            });
-            addNotification('Dataset updated successfully!', 'success');
+        if (isEditMode && id) {
+            await updateDataset(id, formData as Dataset, Array.from(linkedDataTypeIds));
             navigate({ name: 'dataset-detail', id });
         } else {
-            await addDataset({
-                dataset: formData,
-                linkedDataTypeIds: Array.from(linkedDataTypeIds) as any,
-            });
-            addNotification('Dataset added successfully!', 'success');
+            await addDataset(formData, Array.from(linkedDataTypeIds));
             navigate({ name: 'datasets' });
         }
     } catch(error) {
-        console.error("Failed to save dataset:", error);
         addNotification('Failed to save dataset.', 'error');
     }
   };
 
   const handleDelete = async () => {
-    if (isEditMode && formData && window.confirm(`Are you sure you want to delete the dataset "${formData.name}"? This action cannot be undone.`)) {
+    if (isEditMode && id && formData && window.confirm(`Are you sure you want to delete the dataset "${formData.name}"? This action cannot be undone.`)) {
         try {
             await deleteDataset(id);
-            addNotification('Dataset deleted successfully!', 'success');
             navigate({ name: 'datasets' });
         } catch (error) {
-            console.error("Failed to delete dataset:", error);
             addNotification('Failed to delete dataset.', 'error');
         }
     }
   }
   
-  const FormRow: React.FC<{children: React.ReactNode, required?: boolean, label: string, htmlFor: string}> = ({children, required, label, htmlFor}) => (
-      <div>
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-neutral-700 mb-1">
-            {label} {required && <span className="text-red-600">*</span>}
-        </label>
-        {children}
-      </div>
-  );
-
   const inputClasses = "block w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
 
   const backLink = isEditMode && id ? { name: 'dataset-detail', id: id } as Page : { name: 'datasets' } as Page;

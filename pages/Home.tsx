@@ -3,7 +3,6 @@ import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { Card, CardContent } from '../components/Card';
 import { DocumentTextIcon, DatabaseIcon, CollectionIcon } from '../components/Icons';
-import { AnnexBadge } from '../components/Badge';
 
 interface HomeProps {
   navigate: (page: Page) => void;
@@ -41,7 +40,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Data Types" value={dataTypes.length} icon={<DocumentTextIcon className="w-6 h-6" />} onClick={() => navigate({name: 'data-types'})} />
         <StatCard title="Total Datasets" value={datasets.length} icon={<DatabaseIcon className="w-6 h-6" />} onClick={() => navigate({name: 'datasets'})} />
-        <StatCard title="INSPIRE Themes" value={inspireThemes.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'inspire-themes'})} />
+        <StatCard title="Categories" value={inspireThemes.length} icon={<CollectionIcon className="w-6 h-6" />} onClick={() => navigate({name: 'inspire-themes'})} />
       </div>
 
       <div>
@@ -57,8 +56,8 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">INSPIRE Theme</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Annex</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDLS Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
@@ -70,7 +69,7 @@ const Home: React.FC<HomeProps> = ({ navigate }) => {
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900 hover:text-primary-600 transition-colors">{dt.name}</td>
                   <td className="px-4 py-3 text-neutral-600">{dt.inspire_theme}</td>
-                  <td className="px-4 py-3"><AnnexBadge annex={dt.inspire_annex} /></td>
+                  <td className="px-4 py-3 text-neutral-600">{dt.rdls_coverage || <span className="text-neutral-400 italic">Not specified</span>}</td>
                 </tr>
               ))}
               {dataTypes.length === 0 && (
