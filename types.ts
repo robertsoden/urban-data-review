@@ -31,6 +31,7 @@ export interface DataType {
   minimum_criteria: string;
   rdls_coverage: string;
   rdls_extension_module: string;
+  notes: string;
   created_at: string;
 }
 

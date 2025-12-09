@@ -30,7 +30,8 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
     applicable_standards: '',
     minimum_criteria: '',
     rdls_coverage: '',
-    rdls_extension_module: ''
+    rdls_extension_module: '',
+    notes: ''
   });
   const [linkedDatasetIds, setLinkedDatasetIds] = useState<Set<string>>(new Set());
 
@@ -168,6 +169,11 @@ const DataTypeForm: React.FC<DataTypeFormProps> = ({ navigate, id }) => {
               <div className="md:col-span-2">
                 <FormRow label="RDLS Extension Module" htmlFor="rdls_extension_module">
                     <input type="text" id="rdls_extension_module" name="rdls_extension_module" value={formData.rdls_extension_module} onChange={handleChange} className={inputClasses} />
+                </FormRow>
+              </div>
+              <div className="md:col-span-3">
+                <FormRow label="Notes" htmlFor="notes">
+                    <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} className={inputClasses} placeholder="Additional notes or comments..." />
                 </FormRow>
               </div>
             </div>

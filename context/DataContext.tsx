@@ -475,6 +475,143 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return dataTypeDatasets.filter(link => link.dataset_id === datasetId).length;
   };
 
+  // CSV parsing helper
+  const parseCSV = (content: string): { dataTypes: DataType[], datasets: Dataset[], inspireThemes: InspireTheme[], dataTypeDatasets: DataTypeDataset[] } => {
+    const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    if (lines.length < 2) {
+      throw new Error('CSV file is empty or has no data rows');
+    }
+
+    // Parse header row
+    const headers = lines[0].split(',').map(h => h.trim());
+    console.log('[CSV Import] Headers:', headers);
+
+    // Parse data rows
+    const parseRow = (line: string): string[] => {
+      const values: string[] = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++; // Skip escaped quote
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          values.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current); // Push last value
+      return values;
+    };
+
+    const dataTypesMap = new Map<string, DataType>();
+    const datasetsMap = new Map<string, Dataset>();
+    const categoriesMap = new Map<string, InspireTheme>();
+    const relationships: { dataTypeId: string, datasetId: string }[] = [];
+
+    // Process each row
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseRow(lines[i]);
+      const rowType = values[0];
+
+      if (rowType === 'DATA_TYPE') {
+        const dt: DataType = {
+          id: values[1] || `dt-${Date.now()}-${i}`,
+          name: values[3] || '',
+          inspire_theme: values[4] || '',
+          inspire_annex: values[5] || '',
+          inspire_spec: values[6] || '',
+          description: values[7] || '',
+          applicable_standards: values[8] || '',
+          minimum_criteria: values[9] || '',
+          rdls_coverage: values[10] || '',
+          rdls_extension_module: values[11] || '',
+          notes: values[26] || '',
+          created_at: new Date().toISOString()
+        };
+        dataTypesMap.set(dt.id, dt);
+      } else if (rowType === 'DATASET') {
+        const datasetId = values[1] || `ds-${Date.now()}-${i}`;
+        const dataTypeId = values[2] || '';
+
+        // Only add dataset if not already seen (deduplicate)
+        if (!datasetsMap.has(datasetId)) {
+          const ds: Dataset = {
+            id: datasetId,
+            name: values[3] || '',
+            url: values[12] || '',
+            description: values[7] || '',
+            source_organization: values[13] || '',
+            source_type: values[14] || '',
+            geographic_coverage: values[15] || '',
+            temporal_coverage: values[16] || '',
+            format: values[17] || '',
+            resolution: values[18] || '',
+            access_type: values[19] || '',
+            license: values[20] || '',
+            is_validated: values[21] === 'true',
+            is_primary_example: values[22] === 'true',
+            quality_notes: values[23] || '',
+            used_in_projects: values[24] || '',
+            notes: values[26] || '',
+            created_at: new Date().toISOString()
+          };
+          datasetsMap.set(datasetId, ds);
+        }
+
+        // Track relationship
+        if (dataTypeId) {
+          relationships.push({ dataTypeId, datasetId });
+        }
+      } else if (rowType === 'CATEGORY') {
+        const cat: InspireTheme = {
+          id: values[1] || `theme-${Date.now()}-${i}`,
+          name: values[3] || '',
+          description: values[7] || ''
+        };
+        categoriesMap.set(cat.id, cat);
+      }
+    }
+
+    // Build dataTypeDatasets from relationships
+    const dataTypeDatasets: DataTypeDataset[] = relationships.map((rel, index) => ({
+      id: `dtds-${rel.dataTypeId}-${rel.datasetId}`,
+      data_type_id: rel.dataTypeId,
+      dataset_id: rel.datasetId
+    }));
+
+    // If no categories were in CSV, generate from data types
+    let inspireThemes = Array.from(categoriesMap.values());
+    if (inspireThemes.length === 0) {
+      const uniqueThemes = new Set<string>();
+      dataTypesMap.forEach(dt => {
+        if (dt.inspire_theme) uniqueThemes.add(dt.inspire_theme);
+      });
+      inspireThemes = Array.from(uniqueThemes).map((name, idx) => ({
+        id: `theme-${idx + 1}`,
+        name,
+        description: `INSPIRE theme for ${name}`
+      }));
+    }
+
+    console.log(`[CSV Import] Parsed: ${dataTypesMap.size} data types, ${datasetsMap.size} datasets, ${inspireThemes.length} categories, ${dataTypeDatasets.length} relationships`);
+
+    return {
+      dataTypes: Array.from(dataTypesMap.values()),
+      datasets: Array.from(datasetsMap.values()),
+      inspireThemes,
+      dataTypeDatasets
+    };
+  };
+
   const importData = async (file: File) => {
     return new Promise<void>((resolve, reject) => {
       const reader = new FileReader();
@@ -483,9 +620,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           console.log('[Import] Starting import process...');
           const content = event.target?.result as string;
-          console.log('[Import] File read successfully, parsing JSON...');
-          const data = JSON.parse(content);
-          console.log('[Import] JSON parsed successfully');
+          const isCSV = file.name.toLowerCase().endsWith('.csv');
+
+          let data: { dataTypes: any[], datasets: any[], inspireThemes?: any[], dataTypeDatasets?: any[] };
+
+          if (isCSV) {
+            console.log('[Import] Detected CSV file, parsing...');
+            data = parseCSV(content);
+            console.log('[Import] CSV parsed successfully');
+          } else {
+            console.log('[Import] File read successfully, parsing JSON...');
+            data = JSON.parse(content);
+            console.log('[Import] JSON parsed successfully');
+          }
 
           // Validate required fields (dataTypes and datasets are required)
           const missingFields: string[] = [];
@@ -521,25 +668,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Set defaults for optional fields
           const dataTypeDatasets = data.dataTypeDatasets || [];
 
-          // Generate inspireThemes from unique DataType.inspire_theme values
-          const uniqueThemeNames = new Set<string>();
-          data.dataTypes.forEach((dt: any) => {
-            if (dt.inspire_theme && typeof dt.inspire_theme === 'string' && dt.inspire_theme.trim()) {
-              uniqueThemeNames.add(dt.inspire_theme.trim());
-            }
-          });
+          // For CSV imports, use the categories from the CSV file
+          // For JSON imports, generate inspireThemes from data types
+          let inspireThemes: InspireTheme[];
 
-          console.log(`[Import] Unique INSPIRE theme names extracted from DataTypes:`, Array.from(uniqueThemeNames).sort());
+          if (isCSV && data.inspireThemes && data.inspireThemes.length > 0) {
+            // CSV import: use categories from file
+            inspireThemes = data.inspireThemes;
+            console.log(`[Import] Using ${inspireThemes.length} categories from CSV file`);
+          } else {
+            // JSON import or no categories in CSV: generate from data types
+            const uniqueThemeNames = new Set<string>();
+            data.dataTypes.forEach((dt: any) => {
+              if (dt.inspire_theme && typeof dt.inspire_theme === 'string' && dt.inspire_theme.trim()) {
+                uniqueThemeNames.add(dt.inspire_theme.trim());
+              }
+            });
 
-          // Create inspireTheme objects from unique names
-          const inspireThemes: InspireTheme[] = Array.from(uniqueThemeNames).map((name, index) => ({
-            id: `theme-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
-            name: name,
-            description: `INSPIRE theme for ${name}`
-          }));
+            console.log(`[Import] Unique INSPIRE theme names extracted from DataTypes:`, Array.from(uniqueThemeNames).sort());
 
-          console.log(`[Import] Generated inspireThemes:`, inspireThemes.map(t => ({ id: t.id, name: t.name })));
-          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${inspireThemes.length} inspireThemes (generated from DataTypes), ${dataTypeDatasets.length} dataTypeDatasets`);
+            inspireThemes = Array.from(uniqueThemeNames).map((name, index) => ({
+              id: `theme-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}`,
+              name: name,
+              description: `INSPIRE theme for ${name}`
+            }));
+            console.log(`[Import] Generated ${inspireThemes.length} inspireThemes from DataTypes`);
+          }
+
+          console.log(`[Import] Data to import: ${data.dataTypes.length} dataTypes, ${data.datasets.length} datasets, ${inspireThemes.length} inspireThemes, ${dataTypeDatasets.length} dataTypeDatasets`);
 
           // Validate individual DataType items
           const requiredDataTypeFields = [
@@ -555,6 +711,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 `Invalid DataType at index ${index} (name: "${item.name || 'unknown'}"): ` +
                 `missing required fields: ${missing.join(', ')}`
               );
+            }
+            // Add notes field if missing (for backwards compatibility)
+            if (!('notes' in item)) {
+              item.notes = '';
             }
           });
 

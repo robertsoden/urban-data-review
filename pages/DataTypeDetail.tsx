@@ -86,6 +86,15 @@ const DataTypeDetail: React.FC<DataTypeDetailProps> = ({ navigate, id }) => {
         </CardContent>
       </Card>
 
+      {dataType.notes && (
+        <Card>
+          <CardHeader>Notes</CardHeader>
+          <CardContent>
+            <p className="text-neutral-700 whitespace-pre-wrap">{dataType.notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>Linked Datasets ({linkedDatasets.length})</CardHeader>
         <CardContent>

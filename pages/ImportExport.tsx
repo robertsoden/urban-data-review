@@ -13,75 +13,157 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
     const [isImporting, setIsImporting] = useState(false);
 
     const exportAsCSV = () => {
-        const csvSections: string[] = [];
+        const csvRows: string[] = [];
 
         const escapeCsvField = (field: any): string => {
             if (field === null || field === undefined) {
-                return '""';
+                return '';
             }
             const str = String(field);
-            // Replace quotes with double quotes and wrap in quotes
-            return `"${str.replace(/"/g, '""')}"`;
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
         };
 
-        // Section 1: Data Types
-        const dataTypeHeaders = [
-            'id', 'name', 'inspire_theme', 'inspire_annex', 'inspire_spec',
-            'description', 'applicable_standards', 'minimum_criteria',
-            'rdls_coverage', 'rdls_extension_module', 'created_at'
+        // Helper to get datasets for a data type
+        const getDatasetsForDataType = (dataTypeId: string) => {
+            const linkedDatasetIds = dataTypeDatasets
+                .filter(dtd => dtd.data_type_id === dataTypeId)
+                .map(dtd => dtd.dataset_id);
+            return datasets.filter(ds => linkedDatasetIds.includes(ds.id));
+        };
+
+        // Combined header row with all fields from both data types and datasets
+        const headers = [
+            'row_type',
+            'id',
+            'data_type_id', // For datasets: which data type this is linked to
+            // Data Type fields
+            'name',
+            'category',
+            'inspire_annex',
+            'inspire_spec',
+            'description',
+            'applicable_standards',
+            'minimum_criteria',
+            'rdls_coverage',
+            'rdls_extension_module',
+            // Dataset fields
+            'url',
+            'source_organization',
+            'source_type',
+            'geographic_coverage',
+            'temporal_coverage',
+            'format',
+            'resolution',
+            'access_type',
+            'license',
+            'is_validated',
+            'is_primary_example',
+            'quality_notes',
+            'used_in_projects',
+            // Shared
+            'notes'
         ];
-        let dataTypeRows = dataTypes.map(dt =>
-            dataTypeHeaders.map(header => escapeCsvField(dt[header as keyof typeof dt])).join(',')
-        );
-        csvSections.push('DataTypes');
-        csvSections.push(dataTypeHeaders.join(','));
-        csvSections.push(...dataTypeRows);
+        csvRows.push(headers.join(','));
 
-        // Section 2: Datasets
-        const datasetHeaders = [
-            'id', 'name', 'url', 'description', 'source_organization', 'source_type',
-            'geographic_coverage', 'temporal_coverage', 'format', 'resolution',
-            'access_type', 'license', 'is_validated', 'is_primary_example',
-            'quality_notes', 'used_in_projects', 'notes', 'created_at'
-        ];
-        let datasetRows = datasets.map(ds =>
-            datasetHeaders.map(header => escapeCsvField(ds[header as keyof typeof ds])).join(',')
-        );
-        csvSections.push('\nDatasets');
-        csvSections.push(datasetHeaders.join(','));
-        csvSections.push(...datasetRows);
+        // Process each data type with its associated datasets
+        dataTypes.forEach(dt => {
+            // Add data type row with all its fields
+            csvRows.push([
+                'DATA_TYPE',
+                escapeCsvField(dt.id),
+                '', // data_type_id (not applicable for data types)
+                escapeCsvField(dt.name),
+                escapeCsvField(dt.inspire_theme),
+                escapeCsvField(dt.inspire_annex),
+                escapeCsvField(dt.inspire_spec),
+                escapeCsvField(dt.description),
+                escapeCsvField(dt.applicable_standards),
+                escapeCsvField(dt.minimum_criteria),
+                escapeCsvField(dt.rdls_coverage),
+                escapeCsvField(dt.rdls_extension_module),
+                '', // url
+                '', // source_organization
+                '', // source_type
+                '', // geographic_coverage
+                '', // temporal_coverage
+                '', // format
+                '', // resolution
+                '', // access_type
+                '', // license
+                '', // is_validated
+                '', // is_primary_example
+                '', // quality_notes
+                '', // used_in_projects
+                escapeCsvField(dt.notes)
+            ].join(','));
 
-        // Section 3: INSPIRE Themes (Categories)
-        const themeHeaders = ['id', 'name', 'description'];
-        let themeRows = inspireThemes.map(theme =>
-            themeHeaders.map(header => escapeCsvField(theme[header as keyof typeof theme])).join(',')
-        );
-        csvSections.push('\nInspireThemes');
-        csvSections.push(themeHeaders.join(','));
-        csvSections.push(...themeRows);
+            // Add associated dataset rows with all their fields
+            const linkedDatasets = getDatasetsForDataType(dt.id);
+            linkedDatasets.forEach(ds => {
+                csvRows.push([
+                    'DATASET',
+                    escapeCsvField(ds.id),
+                    escapeCsvField(dt.id), // data_type_id - links this dataset to the data type
+                    escapeCsvField(ds.name),
+                    '', // category
+                    '', // inspire_annex
+                    '', // inspire_spec
+                    escapeCsvField(ds.description),
+                    '', // applicable_standards
+                    '', // minimum_criteria
+                    '', // rdls_coverage
+                    '', // rdls_extension_module
+                    escapeCsvField(ds.url),
+                    escapeCsvField(ds.source_organization),
+                    escapeCsvField(ds.source_type),
+                    escapeCsvField(ds.geographic_coverage),
+                    escapeCsvField(ds.temporal_coverage),
+                    escapeCsvField(ds.format),
+                    escapeCsvField(ds.resolution),
+                    escapeCsvField(ds.access_type),
+                    escapeCsvField(ds.license),
+                    escapeCsvField(ds.is_validated),
+                    escapeCsvField(ds.is_primary_example),
+                    escapeCsvField(ds.quality_notes),
+                    escapeCsvField(ds.used_in_projects),
+                    escapeCsvField(ds.notes)
+                ].join(','));
+            });
+        });
 
-        // Section 4: DataTypeDataset Relationships
-        const relationshipHeaders = ['id', 'data_type_id', 'dataset_id'];
-        let relationshipRows = dataTypeDatasets.map(rel =>
-            relationshipHeaders.map(header => escapeCsvField(rel[header as keyof typeof rel])).join(',')
-        );
-        csvSections.push('\nDataTypeDatasetRelationships');
-        csvSections.push(relationshipHeaders.join(','));
-        csvSections.push(...relationshipRows);
+        // Add categories at the end
+        inspireThemes.forEach(theme => {
+            csvRows.push([
+                'CATEGORY',
+                escapeCsvField(theme.id),
+                '', // data_type_id
+                escapeCsvField(theme.name),
+                '', // category
+                '', // inspire_annex
+                '', // inspire_spec
+                escapeCsvField(theme.description),
+                '', '', '', '', // data type fields
+                '', '', '', '', '', '', '', '', '', '', '', '', '', // dataset fields
+                '' // notes
+            ].join(','));
+        });
 
-        const csvContent = csvSections.join('\n');
+        const csvContent = csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = `urban-data-catalog-full-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `urban-data-catalog-export-${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        addNotification('Full data exported as CSV successfully', 'success');
+        addNotification('Data exported as CSV successfully', 'success');
     };
 
     const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +213,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                         </li>
                         <li className="flex items-start">
                             <span className="font-semibold text-neutral-800 min-w-[60px]">CSV:</span>
-                            <span>Full backup in spreadsheet format. Cannot be re-imported.</span>
+                            <span>Full backup in spreadsheet format. Edit in Excel and re-import.</span>
                         </li>
                     </ul>
                     <div className="flex gap-3">
@@ -155,7 +237,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                 <CardHeader>Import Data</CardHeader>
                 <CardContent>
                     <p className="text-neutral-600 mb-4">
-                        Import data from a JSON file that was previously exported from this application.
+                        Import data from a JSON or CSV file that was previously exported from this application.
                     </p>
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-md">
                         <p className="font-semibold text-yellow-900 mb-1">⚠️ Warning</p>
@@ -167,12 +249,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ navigate }) => {
                         inline-block px-4 py-2 rounded-lg shadow-sm cursor-pointer font-medium
                         ${isImporting ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed' : 'bg-yellow-500 text-white hover:bg-yellow-600 transition-colors'}
                     `}>
-                        {isImporting ? 'Importing...' : 'Choose JSON File to Import'}
+                        {isImporting ? 'Importing...' : 'Choose File to Import (JSON or CSV)'}
                     </label>
                     <input
                         type="file"
                         id="import-file"
-                        accept=".json"
+                        accept=".json,.csv"
                         className="hidden"
                         onChange={handleImport}
                         disabled={isImporting}

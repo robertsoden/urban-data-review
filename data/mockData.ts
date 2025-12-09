@@ -12,6 +12,7 @@ export const mockDataTypes: DataType[] = [
     minimum_criteria: 'Georeferenced polygon geometries with unique identifiers',
     rdls_coverage: 'Handles',
     rdls_extension_module: '',
+    notes: '',
     created_at: new Date().toISOString(),
   },
   {
@@ -25,6 +26,7 @@ export const mockDataTypes: DataType[] = [
     minimum_criteria: 'Connected network topology with classification attributes',
     rdls_coverage: 'Partial',
     rdls_extension_module: 'Urban-Context',
+    notes: '',
     created_at: new Date().toISOString(),
   },
 ];
