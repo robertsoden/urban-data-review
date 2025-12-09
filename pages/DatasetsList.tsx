@@ -1,11 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { Page } from '../types';
+import { Page, Dataset } from '../types';
 import { Card, CardContent } from '../components/Card';
 
 interface DatasetsListProps {
   navigate: (page: Page) => void;
 }
+
+type SortColumn = 'name' | 'source_organization' | 'dataTypeCount';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon: React.FC<{ column: SortColumn; currentSort: SortColumn; direction: SortDirection }> = ({ column, currentSort, direction }) => {
+  if (column !== currentSort) {
+    return <span className="ml-1 text-neutral-300">↕</span>;
+  }
+  return <span className="ml-1">{direction === 'asc' ? '↑' : '↓'}</span>;
+};
 
 const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
   const { datasets, dataTypes, inspireThemes, getDataTypesForDataset } = useData();
@@ -13,9 +23,20 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
   const [themeFilter, setThemeFilter] = useState<string>('All');
   const [dataTypeFilter, setDataTypeFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const filteredDatasets = useMemo(() => {
-    return datasets.filter(ds => {
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedDatasets = useMemo(() => {
+    const filtered = datasets.filter(ds => {
       // Get linked data types for this dataset
       const linkedDataTypes = getDataTypesForDataset(ds.id);
 
@@ -34,7 +55,20 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
 
       return themeMatch && dataTypeMatch && searchMatch;
     });
-  }, [datasets, themeFilter, dataTypeFilter, searchTerm, getDataTypesForDataset]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortColumn === 'dataTypeCount') {
+        const aCount = getDataTypesForDataset(a.id).length;
+        const bCount = getDataTypesForDataset(b.id).length;
+        return sortDirection === 'asc' ? aCount - bCount : bCount - aCount;
+      }
+      const aVal = (a[sortColumn] || '').toLowerCase();
+      const bVal = (b[sortColumn] || '').toLowerCase();
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [datasets, themeFilter, dataTypeFilter, searchTerm, sortColumn, sortDirection, getDataTypesForDataset]);
 
   return (
     <div className="space-y-6">
@@ -95,14 +129,29 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Source Organization</th>
-                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider">Data Types</th>
-                <th className="px-4 py-3 font-semibold text-neutral-600 uppercase tracking-wider"></th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('name')}
+                >
+                  Name<SortIcon column="name" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('source_organization')}
+                >
+                  Source Organization<SortIcon column="source_organization" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('dataTypeCount')}
+                >
+                  Data Types<SortIcon column="dataTypeCount" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {filteredDatasets.map(ds => {
+              {filteredAndSortedDatasets.map(ds => {
                 const linkedDataTypes = getDataTypesForDataset(ds.id);
 
                 return (
@@ -154,7 +203,7 @@ const DatasetsList: React.FC<DatasetsListProps> = ({ navigate }) => {
                   </tr>
                 );
               })}
-              {filteredDatasets.length === 0 && (
+              {filteredAndSortedDatasets.length === 0 && (
                 <tr>
                   <td colSpan={4} className="text-center py-12 text-neutral-500">
                     No datasets match the current filters.

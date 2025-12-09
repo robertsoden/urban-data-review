@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { Page } from '../types';
+import { Page, DataType } from '../types';
 import { Card, CardContent } from '../components/Card';
 
 interface DataTypesListProps {
@@ -8,23 +8,52 @@ interface DataTypesListProps {
   initialTheme?: string;
 }
 
+type SortColumn = 'name' | 'inspire_theme' | 'rdls_coverage';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon: React.FC<{ column: SortColumn; currentSort: SortColumn; direction: SortDirection }> = ({ column, currentSort, direction }) => {
+  if (column !== currentSort) {
+    return <span className="ml-1 text-neutral-300">↕</span>;
+  }
+  return <span className="ml-1">{direction === 'asc' ? '↑' : '↓'}</span>;
+};
+
 const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme }) => {
   const { dataTypes, inspireThemes } = useData();
 
   const [themeFilter, setThemeFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     setThemeFilter(initialTheme || 'All');
   }, [initialTheme]);
 
-  const filteredDataTypes = useMemo(() => {
-    return dataTypes.filter(dt => {
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedDataTypes = useMemo(() => {
+    const filtered = dataTypes.filter(dt => {
       const themeMatch = themeFilter === 'All' || dt.inspire_theme === themeFilter;
       const searchMatch = searchTerm === '' || dt.name.toLowerCase().includes(searchTerm.toLowerCase());
       return themeMatch && searchMatch;
     });
-  }, [dataTypes, themeFilter, searchTerm]);
+
+    return [...filtered].sort((a, b) => {
+      const aVal = (a[sortColumn] || '').toLowerCase();
+      const bVal = (b[sortColumn] || '').toLowerCase();
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [dataTypes, themeFilter, searchTerm, sortColumn, sortDirection]);
 
   return (
     <div className="space-y-6">
@@ -73,13 +102,28 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme })
           <table className="w-full text-left">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider">RDLS Status</th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('name')}
+                >
+                  Name<SortIcon column="name" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('inspire_theme')}
+                >
+                  Category<SortIcon column="inspire_theme" currentSort={sortColumn} direction={sortDirection} />
+                </th>
+                <th
+                  className="px-4 py-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 select-none"
+                  onClick={() => handleSort('rdls_coverage')}
+                >
+                  RDLS Status<SortIcon column="rdls_coverage" currentSort={sortColumn} direction={sortDirection} />
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {filteredDataTypes.map(dt => (
+              {filteredAndSortedDataTypes.map(dt => (
                 <tr
                   key={dt.id}
                   className="hover:bg-neutral-50 cursor-pointer transition-colors"
@@ -90,7 +134,7 @@ const DataTypesList: React.FC<DataTypesListProps> = ({ navigate, initialTheme })
                   <td className="px-4 py-3 text-neutral-600">{dt.rdls_coverage || <span className="text-neutral-400 italic">Not specified</span>}</td>
                 </tr>
               ))}
-              {filteredDataTypes.length === 0 && (
+              {filteredAndSortedDataTypes.length === 0 && (
                 <tr>
                   <td colSpan={3} className="text-center py-12 text-neutral-500">
                     No data types match the current filters.
