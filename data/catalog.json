@@ -10,7 +10,7 @@
     "example_dataset": "World Database on Protected Areas (WDPA)",
     "example_url": "https://www.protectedplanet.net/en/thematic-areas/wdpa",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Area management/restriction/regulation zones"
   },
@@ -25,7 +25,7 @@
     "example_dataset": "GADM Database of Global Administrative Areas",
     "example_url": "https://gadm.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Area management/restriction/regulation zones"
   },
@@ -40,7 +40,7 @@
     "example_dataset": "",
     "example_url": "",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Area management/restriction/regulation zones"
   },
@@ -55,7 +55,7 @@
     "example_dataset": "",
     "example_url": "",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Area management/restriction/regulation zones"
   },
@@ -70,7 +70,7 @@
     "example_dataset": "UNESCO World Heritage Sites",
     "example_url": "https://whc.unesco.org/en/syndication/",
     "comments": "Extension to the RDLS Exposure component to include cultural heritage ",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Area management/restriction/regulation zones"
   },
@@ -85,7 +85,7 @@
     "example_dataset": "Microsoft Building Footprints",
     "example_url": "https://github.com/microsoft/GlobalMLBuildingFootprints",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Buildings"
   },
@@ -100,7 +100,7 @@
     "example_dataset": "Atlas of Informality",
     "example_url": "https://www.atlasofinformality.com/",
     "comments": "This assumes we are interested in the boundaries of informal settlement areas rather than building-level classification.",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Buildings"
   },
@@ -115,7 +115,7 @@
     "example_dataset": "",
     "example_url": "",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Buildings"
   },
@@ -130,7 +130,7 @@
     "example_dataset": " ",
     "example_url": " ",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Buildings"
   },
@@ -145,7 +145,7 @@
     "example_dataset": "",
     "example_url": "",
     "comments": "Alternatively, we could update the RDLS Exposure module to handle future exposure",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Buildings"
   },
@@ -160,7 +160,7 @@
     "example_dataset": "Copernicus Global DEM ",
     "example_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Elevation"
   },
@@ -175,7 +175,7 @@
     "example_dataset": "OpenStreetMap Power Infrastructure",
     "example_url": "https://wiki.openstreetmap.org/wiki/Tag:power%3Dline",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Energy resources"
   },
@@ -190,7 +190,7 @@
     "example_dataset": "CDP-ICLEI Cities Energy Mix",
     "example_url": " https://data.cdp.net/Renewable-Energy/City-wide-Electricity-Mix/ycef-psus/about_data",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Energy resources"
   },
@@ -205,7 +205,7 @@
     "example_dataset": "EDGAR Emissions in Urban Areas",
     "example_url": "https://edgar.jrc.ec.europa.eu/dataset_ucdb",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Environment"
   },
@@ -220,7 +220,7 @@
     "example_dataset": "CMIP6 Climate Projections",
     "example_url": "https://esgf-node.llnl.gov/projects/cmip6/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Environment"
   },
@@ -235,7 +235,7 @@
     "example_dataset": "Fathom Global Flood Maps",
     "example_url": "https://www.fathom.global/product/global-flood-map/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -250,7 +250,7 @@
     "example_dataset": "YCEO Surface Urban Heat Islands",
     "example_url": "https://developers.google.com/earth-engine/datasets/catalog/YALE_YCEO_UHI_UHI_yearly_pixel_v4",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -265,7 +265,7 @@
     "example_dataset": "EM-DAT International Disaster Database",
     "example_url": "https://www.emdat.be/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -280,7 +280,7 @@
     "example_dataset": "DesInventar Sendai",
     "example_url": "https://www.desinventar.net/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -295,7 +295,7 @@
     "example_dataset": "UNDRR Global Risk Assessment Framework",
     "example_url": "https://www.preventionweb.net/understanding-disaster-risk/graf",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -310,7 +310,7 @@
     "example_dataset": "GEM Vulnerability Database",
     "example_url": "https://platform.openquake.org/vulnerability/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -325,7 +325,7 @@
     "example_dataset": "GEM Global Active Faults Database",
     "example_url": "https://github.com/GEMScienceTools/gem-global-active-faults",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -340,7 +340,7 @@
     "example_dataset": "Climate Central Coastal Risk Screening Tool",
     "example_url": "https://coastal.climatecentral.org/",
     "comments": "Could extend RDLS Hazard component?",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Hazard Disaster and Risk"
   },
@@ -355,7 +355,7 @@
     "example_dataset": "WHO Global Health Observatory: Hepatitis - prevalence of chronic hepatitis among the general population",
     "example_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/hepatitis---prevalence-of-chronic-hepatitis-among-the-general-population",
     "comments": "Not sure if this is critical",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Human health and safety"
   },
@@ -370,7 +370,7 @@
     "example_dataset": "ESA WorldCover Cropland",
     "example_url": "https://esa-worldcover.org/en",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -385,7 +385,7 @@
     "example_dataset": "Global Forest Watch Tree Cover",
     "example_url": "https://www.globalforestwatch.org/map/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -400,7 +400,7 @@
     "example_dataset": "OpenStreetMap Leisure/Landuse",
     "example_url": "https://wiki.openstreetmap.org/wiki/Key:leisure",
     "comments": "Possible overlap with other data types including parks, open space, tree canopy, and NDVI.",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -415,7 +415,7 @@
     "example_dataset": "Copernicus Imperviousness Density",
     "example_url": "https://land.copernicus.eu/en/products/high-resolution-layer-imperviousness",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -430,7 +430,7 @@
     "example_dataset": "CORINE Land Cover Change",
     "example_url": "https://land.copernicus.eu/en/products/corine-land-cover",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -445,7 +445,7 @@
     "example_dataset": "ESA WorldCover 10m",
     "example_url": "https://esa-worldcover.org/en",
     "comments": "Could be separated into two distinct data types if desired",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -460,7 +460,7 @@
     "example_dataset": "MODIS NDVI",
     "example_url": "https://lpdaac.usgs.gov/products/mod13a1v061/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -475,7 +475,7 @@
     "example_dataset": "USGS EROS Archive - Vegetation Monitoring - eVIIRS Global NDWI",
     "example_url": "https://www.usgs.gov/centers/eros/science/usgs-eros-archive-vegetation-monitoring-eviirs-global-ndwi",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -490,7 +490,7 @@
     "example_dataset": "OpenStreetMap Parks and Recreation",
     "example_url": "https://wiki.openstreetmap.org/wiki/Tag:leisure%3Dpark",
     "comments": "Could overlap with Protected Areas or several other data types.",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -505,7 +505,7 @@
     "example_dataset": "GHSL Urban Centre Database",
     "example_url": "https://ghsl.jrc.ec.europa.eu/ghs_stat_ucdb2015mt_r2019a.php",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Landcover/Landuse"
   },
@@ -520,7 +520,7 @@
     "example_dataset": "LandScan Global Population",
     "example_url": "https://landscan.ornl.gov/",
     "comments": "LandScan Global Population data only has daytime/nighttime information for the United States",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Population and Demography"
   },
@@ -535,7 +535,7 @@
     "example_dataset": "WorldPop Population Counts",
     "example_url": "https://www.worldpop.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Population and Demography"
   },
@@ -550,7 +550,7 @@
     "example_dataset": "UN World Urbanization Prospects",
     "example_url": "https://population.un.org/wup/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Population and Demography"
   },
@@ -565,7 +565,7 @@
     "example_dataset": "WorldPop Age and Sex Structures",
     "example_url": "https://www.worldpop.org/geodata/listing?id=65",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Population and Demography"
   },
@@ -580,7 +580,7 @@
     "example_dataset": "USGS Liquefaction Susceptibility",
     "example_url": "https://www.usgs.gov/programs/earthquake-hazards/science/liquefaction-hazard-maps",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Soil"
   },
@@ -595,7 +595,7 @@
     "example_dataset": "ISRIC SoilGrids",
     "example_url": "https://soilgrids.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Soil"
   },
@@ -610,7 +610,7 @@
     "example_dataset": "Global Soil Erosion Modelling (JRC)",
     "example_url": "https://esdac.jrc.ec.europa.eu/content/global-soil-erosion",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Soil"
   },
@@ -625,7 +625,7 @@
     "example_dataset": "FAO Global Soil Salinity Map",
     "example_url": "https://www.fao.org/soils-portal/data-hub/soil-maps-and-databases/global-map-of-salt-affected-soils-gsas/en/",
     "comments": "Not sure if this is necessary.",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Soil"
   },
@@ -640,7 +640,7 @@
     "example_dataset": "EU Urban Mobility Observatory",
     "example_url": "https://urban-mobility-observatory.transport.ec.europa.eu/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -655,7 +655,7 @@
     "example_dataset": "World Bank Subnational Finance",
     "example_url": "https://datacatalog.worldbank.org/search/dataset/0037780",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -670,7 +670,7 @@
     "example_dataset": "ILO ILOSTAT Employment Data",
     "example_url": "https://ilostat.ilo.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -685,7 +685,7 @@
     "example_dataset": "OECD Metropolitan Database",
     "example_url": "https://www.oecd.org/regional/regional-statistics/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -700,7 +700,7 @@
     "example_dataset": "Swiss Re Sigma World Insurance",
     "example_url": "https://www.sigma-explorer.com/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -715,7 +715,7 @@
     "example_dataset": "VIIRS Nighttime Lights",
     "example_url": "https://eogdata.mines.edu/products/vnl/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -730,7 +730,7 @@
     "example_dataset": "World Bank Poverty and Inequality Platform",
     "example_url": "https://pip.worldbank.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -745,7 +745,7 @@
     "example_dataset": "Oxford Multidimensional Poverty Index (MPI)",
     "example_url": "https://ophi.org.uk/multidimensional-poverty-index/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -760,7 +760,7 @@
     "example_dataset": "UNDP Human Development Index",
     "example_url": "https://hdr.undp.org/data-center/human-development-index",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -775,7 +775,7 @@
     "example_dataset": "UN-Habitat Urban Indicators Database",
     "example_url": "https://data.unhabitat.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Statistical units"
   },
@@ -790,7 +790,7 @@
     "example_dataset": "OpenStreetMap Roads",
     "example_url": "https://wiki.openstreetmap.org/wiki/Key:highway",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Transport networks"
   },
@@ -805,7 +805,7 @@
     "example_dataset": "World Port Index",
     "example_url": "https://msi.nga.mil/Publications/WPI",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Transport networks"
   },
@@ -820,7 +820,7 @@
     "example_dataset": "OpenStreetMap Paths and Cycleways",
     "example_url": "https://wiki.openstreetmap.org/wiki/Key:highway",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Transport networks"
   },
@@ -835,7 +835,7 @@
     "example_dataset": "Transitland Global Transit Data",
     "example_url": "https://www.transit.land/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Transport networks"
   },
@@ -850,7 +850,7 @@
     "example_dataset": "OpenStreetMap Education Facilities",
     "example_url": "https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dschool",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -865,7 +865,7 @@
     "example_dataset": "Healthsites.io Global Health Facilities",
     "example_url": "https://healthsites.io/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -880,7 +880,7 @@
     "example_dataset": "HDX Critical Infrastructure",
     "example_url": "https://data.humdata.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -895,7 +895,7 @@
     "example_dataset": "OpenAQ Air Quality Data",
     "example_url": "https://openaq.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -910,7 +910,7 @@
     "example_dataset": "GEMS/Water Data Portal",
     "example_url": "https://gemstat.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -925,7 +925,7 @@
     "example_dataset": "Malaria Atlas Project Travel Time",
     "example_url": "https://malariaatlas.org/research-project/accessibility-to-cities/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -940,7 +940,7 @@
     "example_dataset": "UNDRR Early Warning Systems Status",
     "example_url": "https://sendaimonitor.undrr.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -955,7 +955,7 @@
     "example_dataset": "OpenStreetMap Emergency Infrastructure",
     "example_url": "https://wiki.openstreetmap.org/wiki/Tag:emergency%3Dassembly_point",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -970,7 +970,7 @@
     "example_dataset": "WHO/UNICEF JMP WASH Data",
     "example_url": "https://washdata.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -985,7 +985,7 @@
     "example_dataset": "WHO/UNICEF JMP Sanitation Data",
     "example_url": "https://washdata.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -1000,7 +1000,7 @@
     "example_dataset": "OpenCelliD Cell Tower Database",
     "example_url": "https://opencellid.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -1015,7 +1015,7 @@
     "example_dataset": "OpenStreetMap Waterway/Drainage",
     "example_url": "https://wiki.openstreetmap.org/wiki/Key:waterway",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -1030,7 +1030,7 @@
     "example_dataset": "NOAA Global Historical Climatology Network",
     "example_url": "https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-daily",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -1045,7 +1045,7 @@
     "example_dataset": "Global Runoff Data Centre (GRDC)",
     "example_url": "https://www.bafg.de/GRDC/EN/Home/homepage_node.html",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Utility and governmental services"
   },
@@ -1060,7 +1060,7 @@
     "example_dataset": "HydroSHEDS River Network",
     "example_url": "https://www.hydrosheds.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   },
@@ -1075,7 +1075,7 @@
     "example_dataset": "OpenStreetMap Waterways",
     "example_url": "https://wiki.openstreetmap.org/wiki/Key:waterway",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   },
@@ -1090,7 +1090,7 @@
     "example_dataset": "WHYMAP World Hydrogeological Map",
     "example_url": "https://www.whymap.org/",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   },
@@ -1105,7 +1105,7 @@
     "example_dataset": "NOAA OISST Sea Surface Temperature",
     "example_url": "https://www.ncei.noaa.gov/products/optimum-interpolation-sst",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   },
@@ -1120,7 +1120,7 @@
     "example_dataset": "OpenStreetMap Coastline",
     "example_url": "https://osmdata.openstreetmap.de/data/coastlines.html",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   },
@@ -1135,7 +1135,7 @@
     "example_dataset": "Global Lakes and Wetlands Database",
     "example_url": "https://www.hydrosheds.org/products/glwd",
     "comments": "",
-    "reviewed": true,
+    "reviewed": false,
     "review_notes": "",
     "category": "Water"
   }
