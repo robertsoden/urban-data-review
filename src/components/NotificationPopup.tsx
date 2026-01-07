@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useData } from '../context/DataContext';
+import { useData } from '../../context/DataContext';
 import { CheckCircleIcon, XIcon } from './Icons';
 
 const NotificationPopup: React.FC = () => {
