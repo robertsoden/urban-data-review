@@ -50,12 +50,6 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ navigate, index }) => {
     setIsEditing(false);
   };
 
-  const handleMarkReviewed = () => {
-    const newReviewed = !formData.reviewed;
-    setFormData(prev => ({ ...prev, reviewed: newReviewed }));
-    updateDataType(dataType.id, { ...formData, reviewed: newReviewed });
-  };
-
   const handleNext = () => {
     if (index < totalCount - 1) {
       navigate({ name: 'review-item', index: index + 1 });
@@ -214,16 +208,6 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ navigate, index }) => {
                 Edit
               </button>
             )}
-            <button
-              onClick={handleMarkReviewed}
-              className={`px-4 py-2 rounded font-medium text-sm ${
-                formData.reviewed
-                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              {formData.reviewed ? 'Reviewed' : 'Mark as Reviewed'}
-            </button>
           </div>
         </div>
 
@@ -240,14 +224,6 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ navigate, index }) => {
 
         <div className="mt-6 pt-6 border-t border-neutral-200">
           {renderField('Requirements', 'requirements', true)}
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-neutral-200">
-          {renderField('Comments', 'comments', true)}
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-neutral-200">
-          {renderField('Review Notes', 'review_notes', true)}
         </div>
 
         {/* Action buttons */}

@@ -6,14 +6,13 @@ interface ReviewProps {
   navigate: (page: Page) => void;
 }
 
-type SortField = 'name' | 'category' | 'rdls_coverage' | 'rdls_component' | 'example' | 'reviewed';
+type SortField = 'name' | 'category' | 'rdls_coverage' | 'rdls_component' | 'example';
 type SortDirection = 'asc' | 'desc';
 
 const Review: React.FC<ReviewProps> = ({ navigate }) => {
-  const { dataTypes, getReviewedCount, exportData } = useData();
+  const { dataTypes, exportData } = useData();
   const [filterTheme, setFilterTheme] = useState<string>('');
   const [filterCoverage, setFilterCoverage] = useState<string>('');
-  const [showReviewed, setShowReviewed] = useState<boolean>(false);
   const [sortField, setSortField] = useState<SortField>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -43,7 +42,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
     let result = dataTypes.filter(dt => {
       if (filterTheme && dt.category !== filterTheme) return false;
       if (filterCoverage && dt.rdls_coverage !== filterCoverage) return false;
-      if (!showReviewed && dt.reviewed) return false;
       return true;
     });
 
@@ -53,16 +51,16 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
 
       switch (sortField) {
         case 'name':
-          aVal = a.name.toLowerCase();
-          bVal = b.name.toLowerCase();
+          aVal = (a.name || '').toLowerCase();
+          bVal = (b.name || '').toLowerCase();
           break;
         case 'category':
-          aVal = a.category.toLowerCase();
-          bVal = b.category.toLowerCase();
+          aVal = (a.category || '').toLowerCase();
+          bVal = (b.category || '').toLowerCase();
           break;
         case 'rdls_coverage':
-          aVal = a.rdls_coverage.toLowerCase();
-          bVal = b.rdls_coverage.toLowerCase();
+          aVal = (a.rdls_coverage || '').toLowerCase();
+          bVal = (b.rdls_coverage || '').toLowerCase();
           break;
         case 'rdls_component':
           aVal = (a.rdls_component || '').toLowerCase();
@@ -71,10 +69,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
         case 'example':
           aVal = !!(a.example_dataset && a.example_url);
           bVal = !!(b.example_dataset && b.example_url);
-          break;
-        case 'reviewed':
-          aVal = a.reviewed;
-          bVal = b.reviewed;
           break;
         default:
           return 0;
@@ -86,24 +80,17 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
     });
 
     return result;
-  }, [dataTypes, filterTheme, filterCoverage, showReviewed, sortField, sortDirection]);
+  }, [dataTypes, filterTheme, filterCoverage, sortField, sortDirection]);
 
-  const reviewedCount = getReviewedCount();
   const totalCount = dataTypes.length;
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Urban Data Review</h1>
+        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Urban Data Catalog</h1>
         <p className="text-neutral-600">
-          Review each data type one by one. Progress: {reviewedCount} / {totalCount} reviewed
+          {totalCount} data types
         </p>
-        <div className="mt-2 bg-neutral-200 rounded-full h-2 w-64">
-          <div
-            className="bg-green-600 rounded-full h-2 transition-all"
-            style={{ width: `${(reviewedCount / totalCount) * 100}%` }}
-          />
-        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 mb-6">
@@ -134,17 +121,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
                 <option key={cov} value={cov}>{cov}</option>
               ))}
             </select>
-          </div>
-
-          <div className="flex items-center gap-2 mt-5">
-            <input
-              type="checkbox"
-              id="showReviewed"
-              checked={showReviewed}
-              onChange={(e) => setShowReviewed(e.target.checked)}
-              className="rounded"
-            />
-            <label htmlFor="showReviewed" className="text-sm text-neutral-700">Show reviewed</label>
           </div>
 
           <div className="ml-auto mt-5 flex gap-2">
@@ -198,12 +174,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
               >
                 Example<SortIcon field="example" />
               </th>
-              <th
-                className="text-left px-4 py-3 text-sm font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 whitespace-nowrap"
-                onClick={() => handleSort('reviewed')}
-              >
-                Status<SortIcon field="reviewed" />
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -217,11 +187,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
                 >
                   <td className="px-4 py-3">
                     <div className="font-medium text-neutral-900">{dt.name}</div>
-                    {dt.review_notes && (
-                      <div className="text-xs text-neutral-500 mt-0.5 truncate max-w-md">
-                        Note: {dt.review_notes}
-                      </div>
-                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-neutral-600">{dt.category}</td>
                   <td className="px-4 py-3">
@@ -245,18 +210,6 @@ const Review: React.FC<ReviewProps> = ({ navigate }) => {
                       </span>
                     ) : (
                       <span className="text-neutral-400 text-sm">No</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {dt.reviewed ? (
-                      <span className="inline-flex items-center gap-1 text-green-600 text-sm">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Reviewed
-                      </span>
-                    ) : (
-                      <span className="text-neutral-400 text-sm">Pending</span>
                     )}
                   </td>
                 </tr>

@@ -2,18 +2,18 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DataType, Notification } from '../types';
 import catalogData from '../data/catalog.json';
 import { db } from '../firebase';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 
 interface DataContextType {
   dataTypes: DataType[];
   notifications: Notification[];
   loading: boolean;
+  isLocalOnly: boolean;
   updateDataType: (id: string, updates: Partial<DataType>) => void;
   deleteDataType: (id: string) => void;
   addNotification: (message: string, type: 'success' | 'error') => void;
   clearNotification: (id: number) => void;
   exportData: (format: 'json' | 'csv') => void;
-  getReviewedCount: () => number;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -24,35 +24,88 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [dataTypes, setDataTypes] = useState<DataType[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isLocalOnly, setIsLocalOnly] = useState<boolean>(false);
 
-  // Load data: localStorage first, then catalog.json as fallback
+  // Load data: Firebase first, localStorage as fallback
   useEffect(() => {
-    const stored = localStorage.getItem(LOCALSTORAGE_KEY);
-    if (stored) {
-      try {
-        let data = JSON.parse(stored);
-        // Migrate old field name inspire_theme -> category
-        data = data.map((item: any) => {
-          if ('inspire_theme' in item && !('category' in item)) {
-            const { inspire_theme, ...rest } = item;
-            return { ...rest, category: inspire_theme };
+    const loadData = async () => {
+      // Try Firebase first
+      if (db) {
+        try {
+          const querySnapshot = await getDocs(collection(db, 'dataTypes'));
+          if (!querySnapshot.empty) {
+            const firebaseData = querySnapshot.docs.map(doc => doc.data() as DataType);
+            setDataTypes(firebaseData);
+            // Also cache to localStorage
+            localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(firebaseData));
+            console.log(`[DataContext] Loaded ${firebaseData.length} items from Firebase`);
+            setLoading(false);
+            return;
+          } else {
+            // Firebase collection is empty - seed it from localStorage or catalog
+            console.log('[DataContext] Firebase collection empty, seeding initial data...');
+            const stored = localStorage.getItem(LOCALSTORAGE_KEY);
+            let seedData: DataType[];
+            if (stored) {
+              seedData = JSON.parse(stored);
+              console.log('[DataContext] Seeding Firebase from localStorage');
+            } else {
+              seedData = catalogData as DataType[];
+              console.log('[DataContext] Seeding Firebase from catalog.json');
+            }
+
+            // Batch write to Firebase
+            const batch = writeBatch(db);
+            seedData.forEach(item => {
+              batch.set(doc(db, 'dataTypes', item.id), item);
+            });
+            await batch.commit();
+            console.log(`[DataContext] Seeded ${seedData.length} items to Firebase`);
+
+            setDataTypes(seedData);
+            localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(seedData));
+            setLoading(false);
+            return;
           }
-          return item;
-        });
-        setDataTypes(data);
-        console.log(`[DataContext] Loaded ${data.length} items from localStorage`);
-      } catch (e) {
-        console.error('[DataContext] Failed to parse localStorage, using catalog.json');
-        setDataTypes(catalogData as DataType[]);
+        } catch (e) {
+          console.error('[DataContext] Firebase load failed, falling back to localStorage:', e);
+          setIsLocalOnly(true);
+        }
+      } else {
+        console.warn('[DataContext] Firebase not configured, using local-only mode');
+        setIsLocalOnly(true);
       }
-    } else {
-      setDataTypes(catalogData as DataType[]);
-      console.log('[DataContext] Loaded from catalog.json');
-    }
-    setLoading(false);
+
+      // Fallback to localStorage
+      const stored = localStorage.getItem(LOCALSTORAGE_KEY);
+      if (stored) {
+        try {
+          let data = JSON.parse(stored);
+          // Migrate old field name inspire_theme -> category
+          data = data.map((item: any) => {
+            if ('inspire_theme' in item && !('category' in item)) {
+              const { inspire_theme, ...rest } = item;
+              return { ...rest, category: inspire_theme };
+            }
+            return item;
+          });
+          setDataTypes(data);
+          console.log(`[DataContext] Loaded ${data.length} items from localStorage (fallback)`);
+        } catch (e) {
+          console.error('[DataContext] Failed to parse localStorage, using catalog.json');
+          setDataTypes(catalogData as DataType[]);
+        }
+      } else {
+        setDataTypes(catalogData as DataType[]);
+        console.log('[DataContext] Loaded from catalog.json (fallback)');
+      }
+      setLoading(false);
+    };
+
+    loadData();
   }, []);
 
-  // Save to localStorage whenever dataTypes changes
+  // Save to localStorage whenever dataTypes changes (as cache/backup)
   useEffect(() => {
     if (!loading && dataTypes.length > 0) {
       localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(dataTypes));
@@ -114,7 +167,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const headers = [
         'id', 'category', 'name', 'rdls_coverage', 'rdls_component',
         'inspire_spec', 'description', 'requirements', 'example_dataset',
-        'example_url', 'comments', 'reviewed', 'review_notes'
+        'example_url'
       ];
 
       const escapeCSV = (value: string | boolean) => {
@@ -152,21 +205,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addNotification(`Data exported as ${extension.toUpperCase()}`, 'success');
   };
 
-  const getReviewedCount = () => {
-    return dataTypes.filter(dt => dt.reviewed).length;
-  };
-
   return (
     <DataContext.Provider value={{
       dataTypes,
       notifications,
       loading,
+      isLocalOnly,
       updateDataType,
       deleteDataType,
       addNotification,
       clearNotification,
       exportData,
-      getReviewedCount,
     }}>
       {children}
     </DataContext.Provider>

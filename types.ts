@@ -13,9 +13,6 @@ export interface DataType {
   requirements: string;
   example_dataset: string;
   example_url: string;
-  comments: string;
-  reviewed: boolean;
-  review_notes: string;
 }
 
 export interface Notification {
